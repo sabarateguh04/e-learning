@@ -52,7 +52,7 @@ DB_PORT=3306
 DB_USER=db_elearning
 DB_PASSWORD=db_elearning
 DB_NAME=db_elearning
-LEGACY_DB_NAME=sm_learning                  # opsional, boleh dibiarkan jika tidak ada
+LEGACY_DB_NAME=                             # kosongkan — proyek ini standalone, tidak menyentuh DB lain
 
 CAPTCHA_DISABLED=false
 MAIL_SIMULATE=true                          # e-mail ditulis ke backend/outbox/mail.log

@@ -390,6 +390,10 @@ const MASTER_COPY: Array<{ local: string; legacy: string }> = [
 const SEG2 = (col: string) => `SUBSTRING_INDEX(SUBSTRING_INDEX(${col}, '-', 2), '-', -1)`;
 
 async function importMasterData(conn: Conn) {
+  if (!LEGACY_DB) {
+    log('  (LEGACY_DB_NAME not set - standalone mode, no legacy import)');
+    return;
+  }
   const [dbRow] = await q(conn, `SELECT SCHEMA_NAME AS s FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?`, [LEGACY_DB]);
   if (!dbRow) {
     log(`  (legacy database ${LEGACY_DB} not present - skipping import)`);

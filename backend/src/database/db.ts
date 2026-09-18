@@ -11,8 +11,8 @@ export const DB_CONFIG = {
   database: process.env.DB_NAME || 'db_elearning',
 };
 
-/** Legacy master-data database on the same MySQL server (cross-database joins). */
-export const LEGACY_DB = process.env.LEGACY_DB_NAME || 'sm_learning';
+/** Optional legacy master-data database for a one-time import. Empty/unset = the app is fully standalone. */
+export const LEGACY_DB = (process.env.LEGACY_DB_NAME ?? '').trim();
 
 let pool: Pool | null = null;
 
