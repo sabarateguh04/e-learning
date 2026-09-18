@@ -14,6 +14,7 @@ import mysql, { ResultSetHeader } from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 import { DB_CONFIG, LEGACY_DB } from './db';
 import { seedRegionsFull } from './seedRegionsFull';
+import { runPortableDdl } from './portableDdl';
 
 type Conn = mysql.Connection;
 type Rows = mysql.RowDataPacket[];
@@ -307,7 +308,7 @@ const TABLES: Array<{ name: string; ddl: string }> = [
   },
 ];
 
-/** Column upgrades for installs created before these columns existed. All IF NOT EXISTS. */
+/** Column upgrades for installs created before these columns existed. All IF NOT EXISTS (executed via runPortableDdl). */
 const COLUMN_UPGRADES: string[] = [
   // Username becomes the login credential. Existing rows are back-filled from employee_id (lower-cased) so nobody is locked out.
   `ALTER TABLE tbl_elearning_users ADD COLUMN IF NOT EXISTS username VARCHAR(100) NULL AFTER tenant_id`,
@@ -539,7 +540,8 @@ export async function runMigration(): Promise<void> {
     }
 
     log('\nColumn upgrades');
-    for (const ddl of COLUMN_UPGRADES) await conn.query(ddl);
+    // MariaDB accepts `IF NOT EXISTS` inline; MySQL 8 does not — runPortableDdl guards each clause via information_schema.
+    for (const ddl of COLUMN_UPGRADES) await runPortableDdl(conn, ddl);
     log('  + users / modules columns verified');
 
     log('\nMaster data');
