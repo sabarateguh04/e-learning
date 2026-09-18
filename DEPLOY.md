@@ -130,6 +130,8 @@ sudo ufw enable
 
 ## 9. Update versi berikutnya
 
+Cara singkat: `bash deploy/update.sh` (lihat juga `SERVER-NOTES.md` untuk pemulihan pm2 dan `ecosystem.config.cjs`). Manual:
+
 ```bash
 cd /var/www/e-learning && git pull
 cd backend  && npm ci && npm run build && npm run db:migrate && pm2 restart elearning-api
