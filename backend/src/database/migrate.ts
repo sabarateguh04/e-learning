@@ -439,7 +439,8 @@ async function relinkForeignKeys(conn: Conn) {
     ['tbl_elearning_users', 'fk_users_sub_org', 'legacy_sub_org_id', 'tbl_elearning_master_sub_org'],
   ];
   for (const [table, name, col, ref] of local) {
-    await conn.query(`ALTER TABLE \`${table}\` ADD CONSTRAINT \`${name}\` FOREIGN KEY IF NOT EXISTS (\`${col}\`) REFERENCES \`${ref}\` (id) ON DELETE SET NULL`);
+    // Guarded per clause so it also runs on MySQL 8 (no inline IF NOT EXISTS there).
+    await runPortableDdl(conn, `ALTER TABLE \`${table}\` ADD CONSTRAINT \`${name}\` FOREIGN KEY IF NOT EXISTS (\`${col}\`) REFERENCES \`${ref}\` (id) ON DELETE SET NULL`);
   }
 }
 
