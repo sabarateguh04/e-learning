@@ -66,7 +66,7 @@ npm ci
 npm run build          # -> dist/
 npm run db:migrate     # skema + seed dasar + wilayah Indonesia (idempoten)
 npm run db:seed        # hierarki POLRI > Korlantas > Dikmas, 4 akun operasional, 3 modul (idempoten, tanpa wipe)
-pm2 start dist/server.js --name elearning-api
+pm2 start dist/server.js --name e-learning-api
 pm2 save && pm2 startup   # jalankan perintah yang ditampilkan agar auto-start saat reboot
 curl http://localhost:4006/api/public/modules
 ```
@@ -85,7 +85,7 @@ PORT_FE=4007
 ```bash
 npm ci
 npm run build          # -> dist/
-pm2 serve dist 4007 --name elearning-web --spa
+pm2 serve dist 4007 --name e-learning-web --spa
 pm2 save
 ```
 Buka `http://IP-ATAU-DOMAIN:4007`.
@@ -134,7 +134,7 @@ Cara singkat: `bash deploy/update.sh` (lihat juga `SERVER-NOTES.md` untuk pemuli
 
 ```bash
 cd /var/www/e-learning && git pull
-cd backend  && npm ci && npm run build && npm run db:migrate && pm2 restart elearning-api
-cd ../frontend && npm ci && npm run build && pm2 restart elearning-web
+cd backend  && npm ci && npm run build && npm run db:migrate && pm2 restart e-learning-api
+cd ../frontend && npm ci && npm run build && pm2 restart e-learning-web
 ```
 Folder `backend/uploads/` (foto profil & bukti laporan) dan `backend/outbox/` tidak tersentuh oleh `git pull` (di-ignore).

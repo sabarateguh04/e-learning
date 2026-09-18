@@ -6,8 +6,8 @@ Referensi cepat untuk server yang sedang berjalan. Panduan instalasi dari nol ad
 |---|---|
 | Lokasi proyek | `/mnt/database/apps/e-learning` |
 | Repo | `https://github.com/sabarateguh04/e-learning` (branch `main`) |
-| Backend | pm2 `elearning-api` → `backend/dist/server.js`, port **4006** |
-| Frontend | pm2 `elearning-web` → `frontend/dist` (static SPA), port **4007** |
+| Backend | pm2 `e-learning-api` → `backend/dist/server.js`, port **4006** |
+| Frontend | pm2 `e-learning-web` → `frontend/dist` (static SPA), port **4007** |
 | URL | `http://172.20.4.220:4007` (app) · `http://172.20.4.220:4007/portal` (portal publik) · `http://172.20.4.220:4006/api` (API) |
 | Database | MySQL 8, db `db_elearning`, user `db_elearning` (localhost) |
 | Config rahasia | `backend/.env`, `frontend/.env` — **tidak** ada di git, jangan dihapus |
@@ -20,10 +20,10 @@ Referensi cepat untuk server yang sedang berjalan. Panduan instalasi dari nol ad
 cd /mnt/database/apps/e-learning
 
 pm2 ls                              # status kedua service
-pm2 logs elearning-api --lines 100  # log backend
-pm2 logs elearning-web --lines 50   # log frontend
-pm2 restart elearning-api           # setelah ubah backend/.env
-pm2 restart elearning-web
+pm2 logs e-learning-api --lines 100  # log backend
+pm2 logs e-learning-web --lines 50   # log frontend
+pm2 restart e-learning-api           # setelah ubah backend/.env
+pm2 restart e-learning-web
 ```
 
 ## Update ke versi terbaru
@@ -42,7 +42,7 @@ daemon pm2 dimatikan, atau login sebagai user lain (pm2 milik `root` ada di `/ro
 bash /mnt/database/apps/e-learning/deploy/restore-pm2.sh
 ```
 Skrip ini: mendaftarkan ulang kedua service dari `ecosystem.config.cjs`, `pm2 save`, dan memasang unit systemd
-`pm2-root` supaya otomatis naik saat reboot. Setelahnya `pm2 ls` harus menampilkan `elearning-api` dan `elearning-web` **online**.
+`pm2-root` supaya otomatis naik saat reboot. Setelahnya `pm2 ls` harus menampilkan `e-learning-api` dan `e-learning-web` **online**.
 
 Manual (kalau skrip tidak bisa dijalankan):
 ```bash
@@ -68,8 +68,8 @@ curl -sI -H "Origin: http://172.20.4.220:4007" http://localhost:4006/api/public/
 
 ## Ubah alamat / domain
 
-- Frontend memanggil API dari nilai `VITE_API_URL` di `frontend/.env` — **di-bake saat build**, jadi setelah diubah: `cd frontend && npm run build && pm2 restart elearning-web`.
-- Backend hanya menerima origin di `CORS_ORIGIN` (`backend/.env`, pisahkan koma) → `pm2 restart elearning-api`.
+- Frontend memanggil API dari nilai `VITE_API_URL` di `frontend/.env` — **di-bake saat build**, jadi setelah diubah: `cd frontend && npm run build && pm2 restart e-learning-web`.
+- Backend hanya menerima origin di `CORS_ORIGIN` (`backend/.env`, pisahkan koma) → `pm2 restart e-learning-api`.
 - Pindah ke domain + HTTPS: lihat `DEPLOY.md` bagian 6 (Nginx reverse proxy, `client_max_body_size 30m` untuk unggah foto).
 
 ## Database

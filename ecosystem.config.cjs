@@ -3,8 +3,8 @@
  *
  *   cd /mnt/database/apps/e-learning && pm2 start ecosystem.config.cjs && pm2 save
  *
- * - elearning-api : Express backend, reads backend/.env (dotenv, cwd = backend), port PORT_BE (4006)
- * - elearning-web : static frontend build (frontend/dist) served as an SPA on port 4007
+ * - e-learning-api : Express backend, reads backend/.env (dotenv, cwd = backend), port PORT_BE (4006)
+ * - e-learning-web : static frontend build (frontend/dist) served as an SPA on port 4007
  *
  * Override the web port with:  PORT_FE=4007 pm2 start ecosystem.config.cjs
  */
@@ -16,7 +16,7 @@ const WEB_PORT = Number(process.env.PORT_FE || 4007);
 module.exports = {
   apps: [
     {
-      name: 'elearning-api',
+      name: 'e-learning-api',
       cwd: path.join(ROOT, 'backend'),
       script: 'dist/server.js',
       instances: 1,
@@ -32,7 +32,7 @@ module.exports = {
       merge_logs: true,
     },
     {
-      name: 'elearning-web',
+      name: 'e-learning-web',
       cwd: path.join(ROOT, 'frontend'),
       script: 'serve', // pm2's built-in static server
       autorestart: true,
