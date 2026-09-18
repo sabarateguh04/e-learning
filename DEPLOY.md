@@ -66,6 +66,7 @@ npm ci
 npm run build          # -> dist/
 npm run db:migrate     # skema + seed dasar + wilayah Indonesia (idempoten)
 npm run db:seed        # hierarki POLRI > Korlantas > Dikmas, 4 akun operasional, 3 modul (idempoten, tanpa wipe)
+npm run db:seed:instansi   # 4 instansi lain (Kemenkes, BNPB, BNN, Basarnas): hierarki, 16 akun, 12 modul PENDING (idempoten)
 pm2 start dist/server.js --name e-learning-api
 pm2 save && pm2 startup   # jalankan perintah yang ditampilkan agar auto-start saat reboot
 curl http://localhost:4006/api/public/modules

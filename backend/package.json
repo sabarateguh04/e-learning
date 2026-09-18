@@ -12,7 +12,8 @@
     "db:migrate": "tsx src/database/migrate.ts",
     "db:seed:clean": "tsx src/database/seedProductionClean.ts --wipe",
     "db:seed": "tsx src/database/seedProductionClean.ts",
-    "db:seed:regions": "tsx src/database/seedRegionsFull.ts"
+    "db:seed:regions": "tsx src/database/seedRegionsFull.ts",
+    "db:seed:instansi": "tsx src/database/seedInstansiTambahan.ts"
   },
   "keywords": [],
   "author": "",
