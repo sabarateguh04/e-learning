@@ -39,11 +39,26 @@ const TOKEN_TTL = (process.env.JWT_EXPIRES_IN || '24h') as jwt.SignOptions['expi
 const DEFAULT_TENANT = 'dummy-uuid';
 
 /** Tenant hint: explicit header first, then request subdomain (acme.example.com -> "acme"). */
+/**
+ * Tenant for unauthenticated calls: explicit x-tenant-id header, else the first label of a
+ * real sub-domain (korlantas.example.go.id -> "korlantas"). Bare hosts, localhost and IP
+ * addresses (172.20.4.220 would otherwise split into "172") fall back to the default tenant.
+ */
 const resolveTenantHint = (req: Request): string => {
   const header = req.headers['x-tenant-id'];
   if (typeof header === 'string' && header.trim()) return header.trim();
-  const parts = req.hostname.split('.');
-  return parts.length > 2 ? parts[0] : DEFAULT_TENANT;
+  const host = req.hostname.toLowerCase();
+  const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':');
+  const parts = host.split('.');
+  return !isIp && parts.length > 2 ? parts[0] : DEFAULT_TENANT;
+};
+
+/** Looks the hint up; when nothing matches and the client sent no explicit header, use the default tenant. */
+const resolveTenant = async (req: Request) => {
+  const hint = resolveTenantHint(req);
+  const found = await tenantRepo.findByIdOrSubdomain(hint);
+  if (found || typeof req.headers['x-tenant-id'] === 'string') return found;
+  return tenantRepo.findByIdOrSubdomain(DEFAULT_TENANT);
 };
 
 const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/; // 3-32 chars, lower-case letters, digits, . _ -
@@ -102,7 +117,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
-    const tenant = await tenantRepo.findByIdOrSubdomain(resolveTenantHint(req));
+    const tenant = await resolveTenant(req);
     if (!tenant) {
       res.status(404).json({ error: 'Not Found', message: 'Tenant not found' });
       return;
@@ -194,7 +209,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     if (kota_id && provinsi_id && !(await regionRepo.kotaBelongsToProvinsi(kota_id, provinsi_id))) errors.kota_id = 'City does not belong to the selected province';
     if (!legacy_instansi_id) errors.legacy_instansi_id = 'Instansi is required';
 
-    const tenant = await tenantRepo.findByIdOrSubdomain(tenant_id);
+    const tenant = (await tenantRepo.findByIdOrSubdomain(tenant_id)) ?? (typeof b.tenant_id === 'string' && b.tenant_id ? null : await resolveTenant(req));
     if (!tenant) errors.tenant_id = 'Tenant not found';
 
     // Hierarchy check: instansi -> organisasi -> satker -> sub_org must be consistent
@@ -369,7 +384,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const tenant = await tenantRepo.findByIdOrSubdomain(resolveTenantHint(req));
+    const tenant = await resolveTenant(req);
     const user = tenant ? await userRepo.findByEmail(tenant.id, email) : null;
     if (!user) {
       res.status(404).json({
