@@ -5,3 +5,5 @@ dist/
 uploads/
 outbox/
 *.log
+.env*
+!.env.example

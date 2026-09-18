@@ -18,3 +18,5 @@ backend/outbox/
 Thumbs.db
 .vscode/
 .idea/
+.env*
+!.env.example
