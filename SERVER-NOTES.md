@@ -88,3 +88,11 @@ Backup cepat: `mysqldump -u db_elearning -p db_elearning > /mnt/database/backup/
 
 ## Akun awal
 `adm-0001` (Super Admin), `kapolri`, `kapolda_jabar`, `kapolres_depok`, `trainer_depok` — password awal `password123`, wajib diganti saat login pertama. Modul seed berstatus PENDING sampai disetujui Super Admin (*Access Management → Persetujuan Materi*).
+
+## Alesha AI (chat & asisten suara) — mode demo
+
+Tombol melayang kanan-bawah di aplikasi dan portal publik. Saat ini **dummy**: jawaban contoh berbasis kata kunci
+(`backend/src/services/aleshaEngine.ts`), suara memakai Web Speech API browser (`frontend/src/lib/alesha.ts`).
+Titik sambung untuk versi realtime ditandai `TODO(realtime)` di kedua file itu. Endpoint: `GET /api/alesha/status`,
+`POST /api/alesha/chat` `{ message, history?, context? }`. Isi `ALESHA_API_URL` di `backend/.env` untuk meneruskan
+ke engine Alesha (kontrak lama `POST {URL}/api/chat/learning`); jika engine tidak menjawab, otomatis kembali ke dummy.

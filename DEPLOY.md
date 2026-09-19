@@ -60,6 +60,7 @@ ADMIN_CONTACT_EMAIL=admin@domain.go.id
 ADMIN_CONTACT_PHONE=
 SEED_ADMIN_USERNAME=adm-0001                # opsional
 SEED_ADMIN_PASSWORD=password123             # opsional — ganti, lalu wajib diubah saat login pertama
+ALESHA_API_URL=                             # kosong = Alesha AI mode dummy (jawaban contoh); isi URL engine Alesha bila sudah ada
 ```
 ```bash
 npm ci

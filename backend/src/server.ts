@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import modulesRoutes from './routes/modulesRoutes';
 import reportsRoutes from './routes/reportsRoutes';
 import notificationsRoutes from './routes/notificationsRoutes';
+import aleshaRoutes from './routes/aleshaRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import adminRoutes from './routes/adminRoutes';
 import masterRoutes from './routes/masterRoutes';
@@ -34,6 +35,9 @@ app.use('/api/auth', authRoutes);
 
 // Public cascading reference data (provinsi/kota, instansi -> organisasi -> satker -> sub-org).
 app.use('/api/master', masterRoutes);
+
+// Alesha AI assistant (chat + voice). Dummy engine until ALESHA_API_URL / an LLM is wired in.
+app.use('/api/alesha', aleshaRoutes);
 
 // Public share link — counts public_view_count, exposes quiz without answers.
 app.get('/api/public/modules', listPublicModules);

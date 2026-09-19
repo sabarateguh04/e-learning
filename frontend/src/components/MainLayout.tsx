@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { useTenantStore } from '../store/tenantStore';
 import { NotificationBell } from './NotificationBell';
+import { AleshaWidget } from './AleshaWidget';
 import { useUIStore } from '../store/uiStore';
 import { ROLE, isExecutive, isSuperAdmin, isTrainer, type MenuKey } from '../lib/roles';
 import { BRAND } from '../lib/brand';
@@ -343,6 +344,7 @@ export function MainLayout() {
           </div>
         </main>
       </div>
+      <AleshaWidget />
     </div>
   );
 }

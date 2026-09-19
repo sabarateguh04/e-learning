@@ -5,6 +5,7 @@ import { ArrowRight, Building2, Clock, Eye, Film, GraduationCap, Layers, LogIn, 
 import { useFetch } from '../lib/hooks';
 import { AUDIENCE_META, TARGET_AUDIENCES, audienceTone, type TargetAudience } from '../lib/audience';
 import { BRAND } from '../lib/brand';
+import { AleshaWidget } from '../components/AleshaWidget';
 import { EASE_OUT } from '../lib/motionTokens';
 import { useUIStore } from '../store/uiStore';
 import type { LearningModule } from '../types';
@@ -301,6 +302,7 @@ export function PublicPortal() {
           </div>
         </div>
       </footer>
+      <AleshaWidget />
     </div>
   );
 }
