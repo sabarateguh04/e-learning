@@ -81,6 +81,10 @@ export const executiveReportRepo = {
     );
 
     // ── Most accessed modules (viewer count) inside the scope ───────────────
+    // Nasional lists the whole approved catalogue (zero-activity rows included). When the scope is
+    // fenced/narrowed to one instansi, only that instansi's own modules plus modules its people
+    // actually used (viewed / presented) inside the scope are listed — other institutions'
+    // untouched modules are noise there.
     const [top_modules] = await pool.query<RowDataPacket[]>(
       `SELECT m.id AS module_id, m.title, m.target_audience, COALESCE(m.category, 'Umum') AS category,
               COUNT(v.id) AS views,
@@ -91,12 +95,14 @@ export const executiveReportRepo = {
               MAX(v.created_at) AS last_viewed_at,
               (SELECT COUNT(*) FROM tbl_elearning_field_reports r WHERE r.module_id = m.id AND ${rs.sql}) AS sessions
          FROM tbl_elearning_modules m
+         LEFT JOIN tbl_elearning_users a ON a.id = m.author_id
          LEFT JOIN tbl_elearning_module_views v ON v.module_id = m.id AND ${vs.sql}
         WHERE m.approval_status = 'APPROVED'
         GROUP BY m.id, m.title, m.target_audience, m.category
+        ${instansiId ? 'HAVING MAX(a.legacy_instansi_id = ?) = 1 OR views > 0 OR sessions > 0' : ''}
         ORDER BY views DESC, sessions DESC, m.title
         LIMIT ?`,
-      [...rs.params, ...vs.params, topN],
+      [...rs.params, ...vs.params, ...(instansiId ? [instansiId] : []), topN],
     );
 
     // ── Top trainers: field reports + module uploads + modules read ─────────
