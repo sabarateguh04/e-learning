@@ -66,6 +66,13 @@ export const resolveFilters = (user: UserPayload, query: Record<string, unknown>
 export const fencedInstansi = (user: UserPayload): string | null =>
   (user.role_level === ROLE.EXEC_PROVINCE || user.role_level === ROLE.EXEC_CITY) && user.instansi_id ? user.instansi_id : null;
 
+/**
+ * Catalogue fence for the Modules menu: everyone below Nasional (Provinsi, Kota, Trainer) only
+ * browses modules authored by their own instansi (plus platform modules whose author has no
+ * instansi, e.g. Super Admin uploads). Nasional / Super Admin browse the whole catalogue.
+ */
+export const catalogueInstansi = (user: UserPayload): string | null => (user.role_level >= ROLE.EXEC_PROVINCE && user.instansi_id ? user.instansi_id : null);
+
 /** Filters exactly as the query builders apply them (role fence included). */
 export const effectiveFilters = (user: UserPayload, f: AnalyticsFilters = EMPTY_FILTERS): AnalyticsFilters => clamp(user, f);
 

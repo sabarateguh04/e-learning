@@ -20,7 +20,7 @@ export const getAllModules = async (req: AuthenticatedRequest, res: Response, ne
     const audience = typeof req.query.audience === 'string' ? req.query.audience : null;
     const q = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
 
-    const all = await moduleRepo.listVisible(req.tenantId!);
+    const all = await moduleRepo.listVisible(req.user!);
     let modules = all;
     if (audience) modules = modules.filter((m) => m.target_audience === audience);
     if (q) modules = modules.filter((m) => `${m.title} ${m.description} ${m.category}`.toLowerCase().includes(q));
@@ -50,7 +50,7 @@ export const getModuleOptions = async (_req: AuthenticatedRequest, res: Response
 export const getModuleById = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = req.params.id as string;
-    let module = await moduleRepo.findVisibleById(req.tenantId!, id);
+    let module = await moduleRepo.findVisibleById(req.user!, id);
     // Authors may preview their own pending/rejected modules.
     if (!module) {
       const own = await moduleRepo.findById(id);
@@ -70,7 +70,7 @@ export const getModuleById = async (req: AuthenticatedRequest, res: Response, ne
 export const trackView = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = req.params.id as string;
-    if (!(await moduleRepo.findVisibleById(req.tenantId!, id))) {
+    if (!(await moduleRepo.findVisibleById(req.user!, id))) {
       res.status(404).json({ error: 'Not Found', message: 'Module not found' });
       return;
     }

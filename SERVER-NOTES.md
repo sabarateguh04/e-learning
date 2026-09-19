@@ -102,4 +102,6 @@ ke engine Alesha (kontrak lama `POST {URL}/api/chat/learning`); jika engine tida
 - **Nasional / Super Admin**: semua instansi & provinsi; filter *Instansi* tersedia di dashboard & laporan eksekutif.
 - **Eksekutif Provinsi / Kota**: hanya wilayahnya **dan instansinya sendiri** (trainer, laporan, akses materi, persetujuan, notifikasi).
   Eksekutif tanpa pemetaan instansi tidak dipagari instansi (hanya wilayah).
+- **Katalog Materi (menu Modules)**: Nasional/Super Admin melihat semua; Provinsi, Kota, dan Trainer hanya modul instansinya
+  sendiri (+ modul yang diunggah Super Admin tanpa instansi). Portal publik tetap menampilkan semua modul yang disetujui.
 - Pagar instansi dibawa di token login → setelah update ini pengguna yang masih login perlu **logout & login ulang** agar berlaku.

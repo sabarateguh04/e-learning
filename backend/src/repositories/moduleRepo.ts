@@ -1,5 +1,7 @@
 import { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import { getPool } from '../database/db';
+import { UserPayload } from '../middlewares/authenticate';
+import { catalogueInstansi } from '../services/scope';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -142,20 +144,26 @@ const SELECT = `
     LEFT JOIN tbl_elearning_master_instansi li ON li.id = a.legacy_instansi_id`;
 
 /**
- * Modules are centrally managed and GLOBAL: every APPROVED module is visible to all users;
- * what differs per role is the field-report analytics scope, not the catalogue.
- * (`tenantId` is kept in the signature for call-site compatibility.)
+ * Catalogue visibility: APPROVED modules only. Nasional / Super Admin see every institution's
+ * modules; Provinsi, Kota and Trainer accounts see their own instansi's modules plus platform
+ * modules whose author carries no instansi (see services/scope.ts `catalogueInstansi`).
  */
 const VISIBLE = `m.approval_status = 'APPROVED'`;
+const visibleFor = (user: UserPayload): { sql: string; params: unknown[] } => {
+  const instansi = catalogueInstansi(user);
+  return instansi ? { sql: `${VISIBLE} AND (a.legacy_instansi_id IS NULL OR a.legacy_instansi_id = ?)`, params: [instansi] } : { sql: VISIBLE, params: [] };
+};
 
 export const moduleRepo = {
-  async listVisible(_tenantId: string): Promise<LearningModule[]> {
-    const [rows] = await getPool().query<ModuleRow[]>(`${SELECT} WHERE ${VISIBLE} ORDER BY m.published_at DESC, m.title`);
+  async listVisible(user: UserPayload): Promise<LearningModule[]> {
+    const v = visibleFor(user);
+    const [rows] = await getPool().query<ModuleRow[]>(`${SELECT} WHERE ${v.sql} ORDER BY m.published_at DESC, m.title`, v.params);
     return rows.map(toModule);
   },
 
-  async findVisibleById(_tenantId: string, id: string): Promise<LearningModule | null> {
-    const [rows] = await getPool().query<ModuleRow[]>(`${SELECT} WHERE m.id = ? AND ${VISIBLE} LIMIT 1`, [id]);
+  async findVisibleById(user: UserPayload, id: string): Promise<LearningModule | null> {
+    const v = visibleFor(user);
+    const [rows] = await getPool().query<ModuleRow[]>(`${SELECT} WHERE m.id = ? AND ${v.sql} LIMIT 1`, [id, ...v.params]);
     return rows[0] ? toModule(rows[0]) : null;
   },
 

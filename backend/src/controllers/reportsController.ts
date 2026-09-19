@@ -107,7 +107,7 @@ export const submitReport = async (req: AuthenticatedRequest, res: Response, nex
     const { errors, value, photos } = validate(req.body ?? {});
 
     // The module must be visible (approved + granted) to the trainer's tenant.
-    const module = value.module_id ? await moduleRepo.findVisibleById(req.tenantId!, value.module_id) : null;
+    const module = value.module_id ? await moduleRepo.findVisibleById(req.user!, value.module_id) : null;
     if (value.module_id && !module) errors.module_id = 'Module is not available for this tenant';
 
     if (Object.keys(errors).length > 0) {
