@@ -307,7 +307,7 @@ function ModuleApprovals({ notify, onChanged }: { notify: (t: { tone: 'success' 
           ),
         },
         { key: 'instructor', header: 'Pemateri', hideBelow: 'lg', cell: (m) => <span className="text-slate-600 dark:text-slate-300">{m.instructor_name}</span> },
-        { key: 'owner', header: 'Pemilik', hideBelow: 'xl', cell: (m) => (m.tenant_name ? <span className="text-slate-600 dark:text-slate-300">{m.tenant_name}</span> : <Badge>Modul induk</Badge>) },
+        { key: 'owner', header: 'Pemilik', hideBelow: 'xl', cell: (m) => ((m.instansi_name ?? m.tenant_name) ? <span className="text-slate-600 dark:text-slate-300">{m.instansi_name ?? m.tenant_name}</span> : <Badge>Modul induk</Badge>) },
         { key: 'media', header: 'Media', hideBelow: 'lg', cell: (m) => <span className="text-xs text-slate-500 dark:text-slate-400">{[m.video_url && 'Video', (m.pdf_url || m.attachments.length) && 'PDF', m.has_quiz && 'Kuis'].filter(Boolean).join(' · ') || '—'}</span> },
         { key: 'created', header: 'Diajukan', cell: (m) => <span className="text-xs text-slate-500 dark:text-slate-400">{fmtDate(m.created_at)}</span> },
       ]}

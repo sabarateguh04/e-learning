@@ -35,6 +35,8 @@ export interface LearningModule {
   id: string;
   tenant_id: string | null;
   tenant_name: string | null;
+  /** Institution of the author (falls back to tenant name). */
+  instansi_name: string | null;
   author_id: string | null;
   author_name: string | null;
   approval_status: ApprovalStatus;

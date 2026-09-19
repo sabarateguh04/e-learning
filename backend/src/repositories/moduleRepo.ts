@@ -27,6 +27,8 @@ export interface ModuleRow extends RowDataPacket {
   id: string;
   tenant_id: string | null;
   tenant_name: string | null;
+  /** Institution of the author (master instansi), falling back to the tenant name. */
+  instansi_name: string | null;
   created_by: string | null;
   author_id: string | null;
   author_name: string | null;
@@ -56,6 +58,7 @@ export interface LearningModule {
   id: string;
   tenant_id: string | null;
   tenant_name: string | null;
+  instansi_name: string | null;
   author_id: string | null;
   author_name: string | null;
   title: string;
@@ -91,6 +94,7 @@ export const toModule = (r: ModuleRow): LearningModule => ({
   id: r.id,
   tenant_id: r.tenant_id,
   tenant_name: r.tenant_name,
+  instansi_name: r.instansi_name ?? r.tenant_name,
   author_id: r.author_id,
   author_name: r.author_name,
   title: r.title,
@@ -131,10 +135,11 @@ export interface CreateModuleInput {
 }
 
 const SELECT = `
-  SELECT m.*, t.name AS tenant_name, a.full_name AS author_name
+  SELECT m.*, t.name AS tenant_name, a.full_name AS author_name, COALESCE(li.nama, t.name) AS instansi_name
     FROM tbl_elearning_modules m
     LEFT JOIN tbl_elearning_tenants t ON t.id = m.tenant_id
-    LEFT JOIN tbl_elearning_users a ON a.id = m.author_id`;
+    LEFT JOIN tbl_elearning_users a ON a.id = m.author_id
+    LEFT JOIN tbl_elearning_master_instansi li ON li.id = a.legacy_instansi_id`;
 
 /**
  * Modules are centrally managed and GLOBAL: every APPROVED module is visible to all users;
@@ -273,10 +278,11 @@ export const moduleRepo = {
   async listForAdmin(status: ApprovalStatus | null): Promise<LearningModule[]> {
     const where = status ? 'WHERE m.approval_status = ?' : '';
     const [rows] = await getPool().query<ModuleRow[]>(
-      `SELECT m.*, t.name AS tenant_name, a.full_name AS author_name
+      `SELECT m.*, t.name AS tenant_name, a.full_name AS author_name, COALESCE(li.nama, t.name) AS instansi_name
          FROM tbl_elearning_modules m
          LEFT JOIN tbl_elearning_tenants t ON t.id = m.tenant_id
          LEFT JOIN tbl_elearning_users a ON a.id = m.author_id
+         LEFT JOIN tbl_elearning_master_instansi li ON li.id = a.legacy_instansi_id
          ${where}
          ORDER BY FIELD(m.approval_status, 'PENDING', 'APPROVED', 'REJECTED'), m.created_at DESC`,
       status ? [status] : [],
