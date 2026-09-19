@@ -80,6 +80,8 @@ npm run db:migrate        # skema + wilayah 38 provinsi/514 kab-kota — aman di
 npm run db:seed           # hierarki Korlantas/Dikmas, akun operasional, 3 modul — upsert, tanpa hapus
 npm run db:seed:regions   # hanya wilayah
 npm run db:seed:instansi  # 4 instansi tambahan (Kemenkes, BNPB, BNN, Basarnas): hierarki, 16 akun, 12 modul PENDING
+npm run db:seed:master -- --dry-run   # lihat baris pemetaan instansi (instansi/org/satker/sub-org) yang BELUM ada di server
+npm run db:seed:master    # tambahkan yang belum ada — baris yang sudah ada tidak diubah/dihapus, aman diulang
 # npm run db:seed:clean   # BAHAYA: menghapus laporan/modul/akun non-admin lalu seed ulang
 ```
 Backup cepat: `mysqldump -u db_elearning -p db_elearning > /mnt/database/backup/db_elearning-$(date +%F).sql`

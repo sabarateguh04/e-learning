@@ -23,8 +23,8 @@ GRANT ALL PRIVILEGES ON db_elearning.* TO 'db_elearning'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
-Tabel, kolom, master wilayah (38 provinsi / 514 kab-kota), tenant, Super Admin, dan matriks menu
-dibuat otomatis oleh migrasi (idempoten — aman dijalankan berulang).
+Tabel, kolom, master wilayah (38 provinsi / 514 kab-kota), katalog pemetaan instansi (4 tingkat), tenant,
+Super Admin, dan matriks menu dibuat otomatis oleh migrasi (idempoten — aman dijalankan berulang).
 
 ## 3. Clone proyek
 
@@ -67,6 +67,7 @@ npm run build          # -> dist/
 npm run db:migrate     # skema + seed dasar + wilayah Indonesia (idempoten)
 npm run db:seed        # hierarki POLRI > Korlantas > Dikmas, 4 akun operasional, 3 modul (idempoten, tanpa wipe)
 npm run db:seed:instansi   # 4 instansi lain (Kemenkes, BNPB, BNN, Basarnas): hierarki, 16 akun, 12 modul PENDING (idempoten)
+npm run db:seed:master     # katalog pemetaan instansi lengkap (61 instansi / 113 org / 75 satker / 86 sub-org) — hanya menambah yang belum ada
 pm2 start dist/server.js --name e-learning-api
 pm2 save && pm2 startup   # jalankan perintah yang ditampilkan agar auto-start saat reboot
 curl http://localhost:4006/api/public/modules

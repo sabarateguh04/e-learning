@@ -13,7 +13,8 @@
     "db:seed:clean": "tsx src/database/seedProductionClean.ts --wipe",
     "db:seed": "tsx src/database/seedProductionClean.ts",
     "db:seed:regions": "tsx src/database/seedRegionsFull.ts",
-    "db:seed:instansi": "tsx src/database/seedInstansiTambahan.ts"
+    "db:seed:instansi": "tsx src/database/seedInstansiTambahan.ts",
+    "db:seed:master": "tsx src/database/seedMasterInstansi.ts"
   },
   "keywords": [],
   "author": "",

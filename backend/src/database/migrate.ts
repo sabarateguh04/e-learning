@@ -1,7 +1,9 @@
 /**
  * Schema + seed for `db_elearning`. Safe to run on every boot (server.ts calls runMigration()):
  *   - CREATE TABLE IF NOT EXISTS / ADD COLUMN IF NOT EXISTS
- *   - master data copied from the legacy DB only when the local table is EMPTY (INSERT IGNORE)
+ *   - master data copied from the legacy DB only when the local table is EMPTY (INSERT IGNORE);
+ *     standalone installs get the bundled snapshot (data/masterInstansi.ts) instead, again only
+ *     while the instansi table is EMPTY — `npm run db:seed:master` adds missing rows later
  *   - seed rows (regions, primary tenant, super admin, menu matrix) written with INSERT IGNORE,
  *     additionally guarded by an "only when the table is EMPTY" check — re-running never
  *     raises "Duplicate entry" and never overwrites rows an admin has edited
@@ -14,6 +16,7 @@ import mysql, { ResultSetHeader } from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 import { DB_CONFIG, LEGACY_DB } from './db';
 import { seedRegionsFull } from './seedRegionsFull';
+import { seedMasterInstansi } from './seedMasterInstansi';
 import { runPortableDdl } from './portableDdl';
 
 type Conn = mysql.Connection;
@@ -393,6 +396,12 @@ const SEG2 = (col: string) => `SUBSTRING_INDEX(SUBSTRING_INDEX(${col}, '-', 2), 
 async function importMasterData(conn: Conn) {
   if (!LEGACY_DB) {
     log('  (LEGACY_DB_NAME not set - standalone mode, no legacy import)');
+    // Fresh standalone install: load the bundled catalogue once. Never re-run on a populated
+    // table, so rows an admin removed are not resurrected on the next boot.
+    if ((await count(conn, 'tbl_elearning_master_instansi')) === 0) {
+      const res = await seedMasterInstansi(conn);
+      log(`  + bundled master data: ${res.map((r) => `${r.level} +${r.inserted}`).join(' · ')}`);
+    }
     return;
   }
   const [dbRow] = await q(conn, `SELECT SCHEMA_NAME AS s FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?`, [LEGACY_DB]);
