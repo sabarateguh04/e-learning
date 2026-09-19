@@ -1,3 +1,4 @@
+import { useVocab } from '../lib/vocab';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -45,6 +46,7 @@ function Field({ label, htmlFor, error, hint, children }: { label: string; htmlF
  * participant count, 2-4 evidence photos, and notes. Submits to POST /api/reports.
  */
 export function FieldReportForm({ canSubmit, onSubmitted }: { canSubmit: boolean; onSubmitted: (message: string) => void }) {
+  const vocab = useVocab();
   const [form, setForm] = useState<SubmitReportPayload>(emptyForm);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
@@ -144,7 +146,7 @@ export function FieldReportForm({ canSubmit, onSubmitted }: { canSubmit: boolean
       <fieldset disabled={!canSubmit || submitting} className="space-y-5 p-5">
         {!canSubmit && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
-            Hanya Trainer yang dapat mengirim lap kegiatan. Eksekutif meninjau laporan lewat{' '}
+            Hanya {vocab.trainer} yang dapat mengirim {vocab.report.toLowerCase()}. Pimpinan meninjau laporan lewat{' '}
             <Link to="/reports" className="font-medium underline">Inbox Persetujuan Laporan</Link>.
           </p>
         )}
@@ -253,7 +255,7 @@ export function FieldReportForm({ canSubmit, onSubmitted }: { canSubmit: boolean
           <button type="button" onClick={reset} className={secondaryButtonClass}>Reset</button>
           <button type="submit" className={primaryButtonClass}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {submitting ? 'Mengirim…' : 'Kirim Lap Kegiatan'}
+            {submitting ? 'Mengirim…' : `Kirim ${vocab.submit_report}`}
           </button>
         </div>
       </fieldset>

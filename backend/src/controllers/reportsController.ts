@@ -5,6 +5,7 @@ import path from 'node:path';
 import { UPLOAD_ROOT } from './authController';
 import { AuthenticatedRequest, UserPayload } from '../middlewares/authenticate';
 import { AUDIENCE_CATEGORIES, AudienceCategory, FieldReport, reportRepo } from '../repositories/reportRepo';
+import { tenantRepo } from '../repositories/tenantRepo';
 import { moduleRepo } from '../repositories/moduleRepo';
 import { describeScope } from '../services/scope';
 import { approverLabel, canReviewReport, requiredApproverLevel } from '../services/approval';
@@ -133,7 +134,7 @@ export const submitReport = async (req: AuthenticatedRequest, res: Response, nex
         trainer_id: user.id,
         provinsi_id: user.provinsi_id,
         kota_id: user.kota_id,
-        approver_role_level: requiredApproverLevel({ kota_id: user.kota_id, provinsi_id: user.provinsi_id }),
+        approver_role_level: requiredApproverLevel({ kota_id: user.kota_id, provinsi_id: user.provinsi_id, trainer_satker_id: user.satker_id ?? null }, (await tenantRepo.findById(req.tenantId!))?.approval_flow),
         photo_urls,
         ...value,
       });

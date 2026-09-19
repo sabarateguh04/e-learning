@@ -1,4 +1,5 @@
 import { BRAND } from '../lib/brand';
+import { useVocab } from '../lib/vocab';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -33,7 +34,7 @@ const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('id-ID', { day:
 const BREAKDOWN_TITLE: Record<BreakdownLevel, { title: string; hint: string; col: string }> = {
   provinsi: { title: 'Perbandingan antar provinsi', hint: 'Panorama nasional — setiap provinsi dibandingkan berdampingan', col: 'Provinsi' },
   kota: { title: 'Perbandingan antar kota/kabupaten', hint: 'Rekapitulasi seluruh kota/kabupaten di provinsi Anda', col: 'Kota/Kabupaten' },
-  trainer: { title: 'Rincian per trainer', hint: 'Seluruh trainer aktif di wilayah Anda', col: 'Trainer' },
+  trainer: { title: 'Rincian per trainer', hint: 'Seluruh trainer aktif di cakupan Anda', col: 'Trainer' },
 };
 const STATUS_META: Record<ReportActivity['status'], { label: string; tone: 'success' | 'warning' | 'danger' }> = {
   APPROVED: { label: 'Disetujui', tone: 'success' },
@@ -216,6 +217,7 @@ const RANK_STYLE: Record<number, string> = {
 };
 
 function TopTrainers({ rows }: { rows: ReportTrainerStat[] }) {
+  const vocab = useVocab();
   const columns: Column<ReportTrainerStat>[] = [
     {
       key: 'rank',
@@ -227,7 +229,7 @@ function TopTrainers({ rows }: { rows: ReportTrainerStat[] }) {
     },
     {
       key: 'trainer',
-      header: 'Trainer',
+      header: vocab.trainer,
       primary: true,
       cell: (t) => (
         <div className="min-w-0">
@@ -339,6 +341,7 @@ function ReportSkeleton() {
 }
 
 export function ExecutiveReports() {
+  const vocab = useVocab();
   const user = useAuthStore((s) => s.user);
   const tenant = useTenantStore((s) => s.tenant);
   const filters = useAnalyticsFilters();
@@ -390,7 +393,7 @@ export function ExecutiveReports() {
             <MotionItem><Metric label="Sesi Lapangan" value={fmt.format(data.summary.total_sessions)} hint={`${data.summary.approval_rate}% disetujui · ${data.summary.pending_reviews} menunggu tinjauan`} icon={MapPinned} /></MotionItem>
             <MotionItem><Metric label="Audiens Terjangkau" value={fmt.format(data.summary.total_participants)} hint={`rata-rata ${fmt.format(data.summary.avg_participants)} peserta / sesi`} icon={UsersRound} /></MotionItem>
             <MotionItem><Metric label="Akses Modul" value={fmt.format(data.summary.total_views)} hint={`${fmt.format(data.summary.unique_viewers)} viewer unik · ${fmt.format(data.summary.views_7d)} dalam 7 hari`} icon={Eye} accent /></MotionItem>
-            <MotionItem><Metric label="Trainer Aktif" value={`${fmt.format(data.summary.active_trainers)} / ${fmt.format(data.summary.total_trainers)}`} hint={`${fmt.format(data.summary.modules_uploaded)} materi diunggah · ${fmt.format(data.summary.modules_accessed)}/${fmt.format(data.summary.modules_available)} modul diakses`} icon={Activity} /></MotionItem>
+            <MotionItem><Metric label={`${vocab.trainer} Aktif`} value={`${fmt.format(data.summary.active_trainers)} / ${fmt.format(data.summary.total_trainers)}`} hint={`${fmt.format(data.summary.modules_uploaded)} materi diunggah · ${fmt.format(data.summary.modules_accessed)}/${fmt.format(data.summary.modules_available)} modul diakses`} icon={Activity} /></MotionItem>
           </MotionList>
 
           {/* Trend */}
@@ -451,7 +454,7 @@ export function ExecutiveReports() {
               <header className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                 <div className="rounded-lg bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"><Trophy className="h-4 w-4" /></div>
                 <div>
-                  <h2 className="text-sm font-semibold">Top Trainer</h2>
+                  <h2 className="text-sm font-semibold">Top {vocab.trainer}</h2>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Skor = 3×laporan lapangan + 2×materi diunggah + modul dibaca</p>
                 </div>
               </header>

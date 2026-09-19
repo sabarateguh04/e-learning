@@ -3,6 +3,7 @@ import { Building2, CalendarRange, ChevronRight, Landmark, Lock, MapPin, RotateC
 import { useFetch } from '../lib/hooks';
 import type { AnalyticsFilterValues } from '../lib/useAnalyticsFilters';
 import type { FilterOptionsResponse } from '../types';
+import { useVocab } from '../lib/vocab';
 
 const PRESETS: Array<{ label: string; days: number }> = [
   { label: '7 hari', days: 7 },
@@ -59,7 +60,10 @@ export function ExecutiveFilterBar({
     return `/analytics/filters${s ? `?${s}` : ''}`;
   }, [values.provinsi_id, values.kota_id, values.instansi_id]);
   const { data } = useFetch<FilterOptionsResponse>(optionsUrl);
-  const locked = data?.locked ?? { provinsi: false, kota: false, instansi: false };
+  const vocab = useVocab();
+  const locked = data?.locked ?? { provinsi: false, kota: false, instansi: false, satker: false };
+  const lockedSatker = locked.satker ? (data?.names.satker ?? data?.satker[0]?.nama ?? null) : null;
+  const showSatker = !locked.satker;
   const lockedProvinsi = locked.provinsi ? (data?.names.provinsi ?? data?.provinsi[0]?.nama ?? null) : null;
   const lockedKota = locked.kota ? (data?.names.kota ?? data?.kota[0]?.nama ?? null) : null;
   const lockedInstansi = locked.instansi ? (data?.names.instansi ?? data?.instansi?.[0]?.nama ?? null) : null;
@@ -67,7 +71,7 @@ export function ExecutiveFilterBar({
   const showKota = !locked.kota;
   const showInstansi = !locked.instansi;
   const kotaEnabled = locked.provinsi || Boolean(values.provinsi_id);
-  const gridCols = GRID_COLS[1 + Number(showProvinsi) + Number(showKota) + Number(showInstansi) + 1] ?? 'lg:grid-cols-5';
+  const gridCols = GRID_COLS[1 + Number(showProvinsi) + Number(showKota) + Number(showInstansi) + Number(showSatker)] ?? 'lg:grid-cols-5';
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 print:hidden" aria-label="Filter wilayah dan periode">
@@ -85,6 +89,17 @@ export function ExecutiveFilterBar({
             <Lock className="h-3 w-3 text-slate-400" />
             <span className="text-slate-500 dark:text-slate-400">Instansi</span>
             <span className="max-w-[260px] truncate rounded-md bg-white px-1.5 py-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">{lockedInstansi}</span>
+          </span>
+        )}
+
+        {lockedSatker && (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 py-1 pl-2.5 pr-3 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            title={`${vocab.unit} yang Anda pimpin — data dibatasi ke unit ini`}
+          >
+            <Lock className="h-3 w-3 text-slate-400" />
+            <span className="text-slate-500 dark:text-slate-400">{vocab.unit}</span>
+            <span className="max-w-[260px] truncate rounded-md bg-white px-1.5 py-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">{lockedSatker}</span>
           </span>
         )}
 
@@ -139,12 +154,14 @@ export function ExecutiveFilterBar({
           </Field>
         )}
 
-        <Field icon={Building2} label="Satuan kerja">
-          <select value={values.satker_id} onChange={(e) => onChange({ satker_id: e.target.value })} className={control}>
-            <option value="">Semua satuan kerja</option>
-            {data?.satker.map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
-          </select>
-        </Field>
+        {showSatker && (
+          <Field icon={Building2} label={vocab.unit}>
+            <select value={values.satker_id} onChange={(e) => onChange({ satker_id: e.target.value })} className={control}>
+              <option value="">Semua {vocab.unit_plural.toLowerCase()}</option>
+              {data?.satker.map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
+            </select>
+          </Field>
+        )}
 
         <div className="flex min-w-0 flex-col gap-1.5">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">

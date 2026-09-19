@@ -263,6 +263,19 @@ const TABLES: Array<{ name: string; ddl: string }> = [
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   },
   {
+    // main-tenant branch: per-tenant behaviour (vertical vocabulary, approval flow). Prefixed tbl_tenant_*.
+    name: 'tbl_tenant_settings',
+    ddl: `
+      CREATE TABLE IF NOT EXISTS tbl_tenant_settings (
+        tenant_id      CHAR(36)    NOT NULL PRIMARY KEY,
+        vertical       VARCHAR(20) NOT NULL DEFAULT 'pemerintahan' COMMENT 'pemerintahan | pendidikan | korporasi — picks the vocabulary',
+        approval_flow  VARCHAR(20) NOT NULL DEFAULT 'TERRITORY'    COMMENT 'TERRITORY = one level above by wilayah; UNIT_HEAD = unit head first',
+        created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_tenant_settings_tenant FOREIGN KEY (tenant_id) REFERENCES tbl_elearning_tenants (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  },
+  {
     name: 'tbl_elearning_menu_access',
     ddl: `
       CREATE TABLE IF NOT EXISTS tbl_elearning_menu_access (
@@ -480,11 +493,13 @@ const T = TENANTS[0].id;
  */
 const SUPER_ADMIN = { id: 'usr-adm-0001', username: process.env.SEED_ADMIN_USERNAME || 'adm-0001', employee_id: 'ADM-0001', full_name: 'Sistem Administrator' };
 
+// Role 5 (UNIT_HEAD) was added on the main-tenant branch; missing rows are appended idempotently.
+const MENU_ROLES = [0, 1, 2, 3, 4, 5];
 const MENU_DEFAULTS: Record<string, number[]> = {
-  dashboard: [0, 1, 2, 3],
-  executive_reports: [0, 1, 2, 3],
-  reports_inbox: [0, 1, 2, 3],
-  modules: [0, 1, 2, 3, 4],
+  dashboard: [0, 1, 2, 3, 5],
+  executive_reports: [0, 1, 2, 3, 5],
+  reports_inbox: [0, 1, 2, 3, 5],
+  modules: [0, 1, 2, 3, 4, 5],
   submit_report: [4],
   my_reports: [4],
   settings: [0],
@@ -524,12 +539,12 @@ async function seed(conn: Conn) {
   });
 
   await seedIfEmpty('tbl_elearning_menu_access', async () => {
-    const rows = Object.entries(MENU_DEFAULTS).flatMap(([key, roles]) => [0, 1, 2, 3, 4].map((lvl) => [key, lvl, roles.includes(lvl) ? 1 : 0]));
+    const rows = Object.entries(MENU_DEFAULTS).flatMap(([key, roles]) => MENU_ROLES.map((lvl) => [key, lvl, roles.includes(lvl) ? 1 : 0]));
     await conn.query(`INSERT IGNORE INTO tbl_elearning_menu_access (menu_key, role_level, allowed) VALUES ?`, [rows]);
   });
 
   // Menu keys added after the first boot get their default rows; rows the admin already edited are never touched.
-  const menuRows = Object.entries(MENU_DEFAULTS).flatMap(([key, roles]) => [0, 1, 2, 3, 4].map((lvl) => [key, lvl, roles.includes(lvl) ? 1 : 0]));
+  const menuRows = Object.entries(MENU_DEFAULTS).flatMap(([key, roles]) => MENU_ROLES.map((lvl) => [key, lvl, roles.includes(lvl) ? 1 : 0]));
   const [added] = await conn.query<ResultSetHeader>(`INSERT IGNORE INTO tbl_elearning_menu_access (menu_key, role_level, allowed) VALUES ?`, [menuRows]);
   if (added.affectedRows) log(`  + tbl_elearning_menu_access: ${added.affectedRows} new menu row(s) added`);
 }

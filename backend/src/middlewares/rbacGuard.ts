@@ -2,12 +2,14 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './authenticate';
 
 /**
- * 5-tier role hierarchy. Lower number = wider scope.
+ * 6-tier role hierarchy. Lower number = wider scope — except UNIT_HEAD, which was added
+ * later (number 5 keeps existing rows untouched) and sits between EXEC_CITY and TRAINER:
  *
  *   0  SUPER_ADMIN     manages tenants & master modules
  *   1  EXEC_NATIONAL   sees every report in the tenant
  *   2  EXEC_PROVINCE   sees reports inside their province
  *   3  EXEC_CITY       sees reports inside their city
+ *   5  UNIT_HEAD       leads ONE unit (satker: school, polsek, puskesmas) — sees and approves its trainers
  *   4  TRAINER         submits reports, sees only their own
  */
 export const ROLE = {
@@ -16,7 +18,11 @@ export const ROLE = {
   EXEC_PROVINCE: 2,
   EXEC_CITY: 3,
   TRAINER: 4,
+  UNIT_HEAD: 5,
 } as const;
+
+/** Rank in the hierarchy (0 = widest) — use this, not the raw number, when comparing breadth. */
+export const ROLE_RANK: Record<number, number> = { 0: 0, 1: 1, 2: 2, 3: 3, 5: 4, 4: 5 };
 
 export type RoleLevel = (typeof ROLE)[keyof typeof ROLE];
 
@@ -25,10 +31,14 @@ export const ROLE_LABEL: Record<RoleLevel, string> = {
   1: 'Eksekutif Nasional',
   2: 'Eksekutif Provinsi',
   3: 'Eksekutif Kota',
+  5: 'Pimpinan Unit',
   4: 'Trainer',
 };
 
-export const EXECUTIVE_ROLES: readonly RoleLevel[] = [ROLE.SUPER_ADMIN, ROLE.EXEC_NATIONAL, ROLE.EXEC_PROVINCE, ROLE.EXEC_CITY];
+/** Roles that monitor and approve (everything except Trainer). */
+export const EXECUTIVE_ROLES: readonly RoleLevel[] = [ROLE.SUPER_ADMIN, ROLE.EXEC_NATIONAL, ROLE.EXEC_PROVINCE, ROLE.EXEC_CITY, ROLE.UNIT_HEAD];
+/** Roles a person may pick when registering (Super Admin is provisioned, never self-registered). */
+export const REGISTERABLE_ROLES: readonly RoleLevel[] = [ROLE.EXEC_NATIONAL, ROLE.EXEC_PROVINCE, ROLE.EXEC_CITY, ROLE.UNIT_HEAD, ROLE.TRAINER];
 
 export const isRoleLevel = (n: unknown): n is RoleLevel => typeof n === 'number' && n in ROLE_LABEL;
 

@@ -7,7 +7,7 @@ import { AnalyticsFilters, resolveFilters, territorySql } from './scope';
 export interface FilterOption { id: number | string; nama: string }
 
 export interface FilterOptions {
-  locked: { provinsi: boolean; kota: boolean; instansi: boolean };
+  locked: { provinsi: boolean; kota: boolean; instansi: boolean; satker: boolean };
   selected: AnalyticsFilters;
   provinsi: FilterOption[];
   kota: FilterOption[];
@@ -56,15 +56,18 @@ export async function loadFilterOptions(user: UserPayload, query: Record<string,
       );
 
   // Satker list ignores the satker filter itself (so the dropdown keeps every option) but honours territory + instansi.
+  // A UNIT_HEAD is pinned to one unit: list just that unit (even when it has no trainers yet).
   const ts = territorySql(user, 'u', { ...filters, satker_id: null });
-  const [satker] = await pool.query<RowDataPacket[]>(
-    `SELECT DISTINCT s.id, s.nama
-       FROM tbl_elearning_users u
-       JOIN tbl_elearning_master_satker s ON s.id = u.legacy_satker_id
-      WHERE ${ts.sql} AND u.role_level = ${ROLE.TRAINER}
-      ORDER BY s.nama`,
-    ts.params,
-  );
+  const [satker] = locked.satker
+    ? await pool.query<RowDataPacket[]>(`SELECT id, nama FROM tbl_elearning_master_satker WHERE id = ?`, [filters.satker_id])
+    : await pool.query<RowDataPacket[]>(
+        `SELECT DISTINCT s.id, s.nama
+           FROM tbl_elearning_users u
+           JOIN tbl_elearning_master_satker s ON s.id = u.legacy_satker_id
+          WHERE ${ts.sql} AND u.role_level = ${ROLE.TRAINER}
+          ORDER BY s.nama`,
+        ts.params,
+      );
 
   const name = (rows: RowDataPacket[], id: number | string | null) => (id === null ? null : (rows.find((r) => String(r.id) === String(id))?.nama as string | undefined) ?? null);
   return {
@@ -83,5 +86,5 @@ export const chosenNames = (o: FilterOptions) => ({
   provinsi: o.locked.provinsi ? null : o.names.provinsi,
   kota: o.locked.kota ? null : o.names.kota,
   instansi: o.locked.instansi ? null : o.names.instansi,
-  satker: o.names.satker,
+  satker: o.locked.satker ? null : o.names.satker,
 });

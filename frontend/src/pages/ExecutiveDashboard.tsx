@@ -1,3 +1,4 @@
+import { useVocab } from '../lib/vocab';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Award, BarChart3, BookOpen, Clock, Eye, FileDown, Inbox, Loader2, Users, type LucideIcon } from 'lucide-react';
@@ -93,6 +94,7 @@ const RANK_STYLE: Record<number, string> = {
 };
 
 function TrainerLeaderboard({ rows }: { rows: TrainerStat[] }) {
+  const vocab = useVocab();
   const max = Math.max(1, ...rows.map((r) => r.report_count));
   return (
     <div className="overflow-x-auto">
@@ -100,7 +102,7 @@ function TrainerLeaderboard({ rows }: { rows: TrainerStat[] }) {
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
             <th className="px-5 py-2.5 font-semibold">#</th>
-            <th className="px-2 py-2.5 font-semibold">Trainer</th>
+            <th className="px-2 py-2.5 font-semibold">{vocab.trainer}</th>
             <th className="px-2 py-2.5 font-semibold">Sesi</th>
             <th className="px-2 py-2.5 text-right font-semibold">Peserta</th>
             <th className="px-5 py-2.5 text-right font-semibold">Disetujui</th>
@@ -251,6 +253,7 @@ function DashboardSkeleton() {
 }
 
 export function ExecutiveDashboard() {
+  const vocab = useVocab();
   const user = useAuthStore((s) => s.user);
   const filters = useAnalyticsFilters();
   const { data, loading, error, refetch } = useFetch<ExecutiveDashboardResponse>(`/analytics/executive${filters.query}`);
@@ -317,7 +320,7 @@ export function ExecutiveDashboard() {
                   <Award className="h-4 w-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold">Trainer Paling Aktif</h2>
+                  <h2 className="text-sm font-semibold">{vocab.trainer} Paling Aktif</h2>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Peringkat berdasarkan sesi yang dilaporkan</p>
                 </div>
               </header>

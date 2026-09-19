@@ -208,7 +208,7 @@ export interface FilterOption { id: number | string; nama: string }
 export interface AnalyticsFiltersSelected { provinsi_id: number | null; kota_id: number | null; instansi_id: string | null; satker_id: string | null; from: string | null; to: string | null }
 export interface FilterOptionsResponse {
   success?: boolean;
-  locked: { provinsi: boolean; kota: boolean; instansi: boolean };
+  locked: { provinsi: boolean; kota: boolean; instansi: boolean; satker: boolean };
   selected: AnalyticsFiltersSelected;
   provinsi: FilterOption[];
   kota: FilterOption[];

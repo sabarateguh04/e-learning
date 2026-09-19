@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, KeyRound, Layers, Loader2, ShieldCheck, UserPlus } from 'lucide-react';
 import { api, getErrorMessage } from '../lib/api';
 import { useFetch } from '../lib/hooks';
-import { ROLE } from '../lib/roles';
+import { ROLE, needsCity as needsCityFor, needsUnit as needsUnitFor } from '../lib/roles';
 import { BRAND } from '../lib/brand';
 import { EMPTY_INSTANSI } from '../lib/forms';
 import { useCaptcha } from '../lib/useCaptcha';
@@ -78,7 +78,8 @@ export function Register() {
   const clearErrors = (keys: string[]) => setErrors((e) => Object.fromEntries(Object.entries(e).filter(([k]) => !keys.includes(k))));
 
   const needsProvince = account.role_level !== ROLE.EXEC_NATIONAL;
-  const needsCity = account.role_level === ROLE.EXEC_CITY || account.role_level === ROLE.TRAINER;
+  const needsCity = needsCityFor(account.role_level);
+  const needsUnit = needsUnitFor(account.role_level);
   const roleLabel = options.data?.roles.find((r) => r.level === account.role_level)?.label ?? '';
   const legacyName = (list: keyof RegisterOptions['legacy'], id: string) => options.data?.legacy[list].find((o) => o.id === id)?.nama ?? id;
   const provinsiName = useMemo(() => options.data?.provinsi.find((p) => String(p.id) === wilayah.provinsi_id)?.nama, [options.data, wilayah.provinsi_id]);
@@ -98,6 +99,7 @@ export function Register() {
       if (needsProvince && !wilayah.provinsi_id) e.provinsi_id = 'Pilih provinsi';
       if (needsCity && !wilayah.kota_id) e.kota_id = 'Pilih kota';
       if (!instansi.legacy_instansi_id) e.legacy_instansi_id = 'Pilih instansi';
+      if (needsUnit && !instansi.legacy_satker_id) e.legacy_satker_id = 'Pimpinan Unit harus memilih satuan kerja / unit yang dipimpin';
     }
     return e;
   };

@@ -156,7 +156,7 @@ export const executiveReportRepo = {
     );
 
     // ── Comparative breakdown one level below the caller ────────────────────
-    const breakdown_level: BreakdownLevel = user.role_level === ROLE.EXEC_CITY ? 'trainer' : user.role_level === ROLE.EXEC_PROVINCE ? 'kota' : 'provinsi';
+    const breakdown_level: BreakdownLevel = user.role_level === ROLE.EXEC_CITY || user.role_level === ROLE.UNIT_HEAD ? 'trainer' : user.role_level === ROLE.EXEC_PROVINCE ? 'kota' : 'provinsi';
     let breakdown: RowDataPacket[];
     if (breakdown_level === 'trainer') {
       const [rows] = await pool.query<RowDataPacket[]>(

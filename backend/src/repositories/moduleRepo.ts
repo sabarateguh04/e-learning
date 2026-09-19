@@ -149,9 +149,11 @@ const SELECT = `
  * modules whose author carries no instansi (see services/scope.ts `catalogueInstansi`).
  */
 const VISIBLE = `m.approval_status = 'APPROVED'`;
+/** main-tenant: the signed-in catalogue never crosses tenants (the public portal stays global). */
 const visibleFor = (user: UserPayload): { sql: string; params: unknown[] } => {
   const instansi = catalogueInstansi(user);
-  return instansi ? { sql: `${VISIBLE} AND (a.legacy_instansi_id IS NULL OR a.legacy_instansi_id = ?)`, params: [instansi] } : { sql: VISIBLE, params: [] };
+  const sql = `${VISIBLE} AND m.tenant_id = ?`;
+  return instansi ? { sql: `${sql} AND (a.legacy_instansi_id IS NULL OR a.legacy_instansi_id = ?)`, params: [user.tenant_id, instansi] } : { sql, params: [user.tenant_id] };
 };
 
 export const moduleRepo = {

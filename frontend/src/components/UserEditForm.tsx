@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import axios from 'axios';
 import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
 import { api, getErrorMessage } from '../lib/api';
-import { ROLE, ROLE_LABEL, type RoleLevel } from '../lib/roles';
+import { ROLE, ROLE_LABEL, ROLE_ORDER, needsCity, type RoleLevel } from '../lib/roles';
 import type { ApiValidationError } from '../types';
 import { inputClass, primaryButtonClass, secondaryButtonClass } from './ui';
 import { InstansiSelects, WilayahSelects, type InstansiValue, type WilayahValue } from './CascadingSelects';
@@ -42,7 +42,6 @@ function Field({ label, htmlFor, error, hint, children, span = 1 }: { label: str
 }
 
 const needsProvince = (role: number) => role !== ROLE.EXEC_NATIONAL && role !== ROLE.SUPER_ADMIN;
-const needsCity = (role: number) => role === ROLE.EXEC_CITY || role === ROLE.TRAINER;
 
 export function UserEditForm<T>({
   initial,
@@ -130,7 +129,7 @@ export function UserEditForm<T>({
             onChange={(e) => { setForm((f) => ({ ...f, role_level: Number(e.target.value) as RoleLevel })); clear(['role_level', 'provinsi_id', 'kota_id']); }}
             className={inputClass}
           >
-            {(Object.entries(ROLE_LABEL) as Array<[string, string]>).map(([level, label]) => (
+            {ROLE_ORDER.map((level) => [String(level), ROLE_LABEL[level]] as const).map(([level, label]) => (
               <option key={level} value={level}>{level} — {label}</option>
             ))}
           </select>

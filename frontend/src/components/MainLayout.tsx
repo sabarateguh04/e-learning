@@ -29,6 +29,7 @@ import { NotificationBell } from './NotificationBell';
 import { AleshaWidget } from './AleshaWidget';
 import { useUIStore } from '../store/uiStore';
 import { ROLE, isExecutive, isSuperAdmin, isTrainer, type MenuKey } from '../lib/roles';
+import { useVocab, type Labels } from '../lib/vocab';
 import { BRAND } from '../lib/brand';
 import { Avatar } from './Avatar';
 import { PageTransition } from './motion';
@@ -55,6 +56,17 @@ const ALL_NAV: NavItem[] = [
   { key: 'master_data', label: 'Kelola Master Data', to: '/admin/master-data', icon: Database, section: 'Admin' },
 ];
 const ADMIN_ONLY = new Set(['user_management', 'access_management', 'master_data']);
+
+/** Sidebar labels in the tenant's own words (schools see Bahan Ajar / Isi Jurnal, …). */
+const navLabel = (key: string, fallback: string, v: Labels): string => {
+  switch (key) {
+    case 'reports_inbox': return `Inbox ${v.report}`;
+    case 'modules': return v.module_plural;
+    case 'submit_report': return v.submit_report;
+    case 'my_reports': return `${v.report} Saya`;
+    default: return fallback;
+  }
+};
 
 /** Role defaults used until the server-side menu matrix is known. */
 const defaultMenusFor = (roleLevel?: number): MenuKey[] => {
@@ -104,6 +116,7 @@ export function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const vocab = useVocab();
   const { tenant, clearTenant } = useTenantStore();
   const { theme, toggleTheme, sidebarOpen, setSidebarOpen } = useUIStore();
 
@@ -130,7 +143,7 @@ export function MainLayout() {
   const sections = [...new Set(navItems.map((n) => n.section))];
   const activeLabel =
     navItems.find((item) => (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)))?.label ??
-    (location.pathname.startsWith('/reports/new') ? 'Lap Kegiatan' : 'Overview');
+    (location.pathname.startsWith('/reports/new') ? vocab.submit_report : 'Overview');
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -163,7 +176,7 @@ export function MainLayout() {
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{section}</p>
             {navItems
               .filter((n) => n.section === section)
-              .map(({ label, to, icon: Icon, end }) => (
+              .map(({ key, label, to, icon: Icon, end }) => (
                 <NavLink
                   key={to}
                   to={to}
@@ -178,7 +191,7 @@ export function MainLayout() {
                   }
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {label}
+                  {navLabel(key, label, vocab)}
                 </NavLink>
               ))}
           </div>

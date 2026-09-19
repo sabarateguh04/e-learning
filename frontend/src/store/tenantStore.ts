@@ -7,6 +7,13 @@ export interface Tenant {
   subdomain: string;
   logoUrl?: string;
   themeColor?: string;
+  instansi_name?: string | null;
+  /** pemerintahan | pendidikan | korporasi — picks the vocabulary */
+  vertical?: string;
+  /** TERRITORY | UNIT_HEAD — who approves a trainer's report first */
+  approval_flow?: string;
+  /** resolved vocabulary from the API (see lib/vocab.ts) */
+  labels?: Partial<import('../lib/vocab').Labels>;
 }
 
 interface TenantState {

@@ -3,6 +3,7 @@ import { CheckCircle2, Eye, Navigation } from 'lucide-react';
 import { resolveAssetUrl } from '../lib/api';
 import { useFetch } from '../lib/hooks';
 import { isTrainer } from '../lib/roles';
+import { useVocab } from '../lib/vocab';
 import { useAuthStore } from '../store/authStore';
 import type { FieldReport as FieldReportRecord, ReportsResponse } from '../types';
 import { Badge, PageHeader, cardClass } from '../components/ui';
@@ -17,6 +18,7 @@ const fmtDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('id-
 export function FieldReport() {
   const user = useAuthStore((s) => s.user);
   const canSubmit = isTrainer(user?.role_level);
+  const vocab = useVocab();
   const [banner, setBanner] = useState<string | null>(null);
   const [detail, setDetail] = useState<FieldReportRecord | null>(null);
   const recent = useFetch<ReportsResponse>('/reports');
@@ -24,7 +26,7 @@ export function FieldReport() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Lap Kegiatan"
+        title={vocab.submit_report}
         description={`Laporkan kegiatan lapangan: modul yang dipresentasikan, tanggal, audiens, posisi GPS, dan 2–4 foto bukti. Pelapor: ${user?.full_name ?? 'trainer'} · ${user?.territory_name ?? ''}.`}
       />
 

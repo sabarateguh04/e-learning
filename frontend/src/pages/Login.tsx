@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ArrowRight, AtSign, BookOpen, Eye, EyeOff, Globe2, Layers, Loader2, Lock, MapPin, Moon, ShieldCheck, Sun } from 'lucide-react';
+import { ArrowRight, AtSign, BookOpen, Building2, Eye, EyeOff, Globe2, Layers, Loader2, Lock, MapPin, Moon, ShieldCheck, Sun } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
@@ -21,7 +21,7 @@ interface LoginResponse {
 }
 
 const HIGHLIGHTS = [
-  { icon: ShieldCheck, title: 'Hak Akses 5 Tingkat', desc: 'Terisolasi per instansi, cakupan berjenjang', accent: 'text-sky-400' },
+  { icon: ShieldCheck, title: 'Hak Akses Berjenjang', desc: 'Terisolasi per instansi & sekolah, cakupan berjenjang', accent: 'text-sky-400' },
   { icon: Globe2, title: 'Nasional / Provinsi / Kota', desc: 'Analitik sesuai wilayah penugasan', accent: 'text-emerald-400' },
   { icon: BookOpen, title: 'Modul Pembelajaran', desc: 'Video, PDF & evaluasi', accent: 'text-violet-400' },
   { icon: MapPin, title: 'Laporan Lapangan', desc: 'Bukti sesi bergeotag GPS', accent: 'text-amber-400' },
@@ -40,6 +40,20 @@ export function Login() {
   const { theme, toggleTheme } = useUIStore();
 
   const [username, setUsername] = useState('');
+  // Workspace (tenant) picker — the API resolves the tenant from the x-tenant-id header the
+  // interceptor sends from tenantStore, so the choice must be stored BEFORE the login call.
+  const { tenant: storedTenant } = useTenantStore();
+  const [tenants, setTenants] = useState<Array<{ id: string; name: string; instansi_name: string | null; vertical: string }>>([]);
+  const [tenantId, setTenantId] = useState<string>(storedTenant?.id ?? '');
+  useEffect(() => {
+    api
+      .get<{ data: Array<{ id: string; name: string; instansi_name: string | null; vertical: string }> }>('/auth/tenants')
+      .then(({ data }) => {
+        setTenants(data.data);
+        setTenantId((cur) => cur || data.data[0]?.id || '');
+      })
+      .catch(() => setTenants([]));
+  }, []);
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const captcha = useCaptcha();
   const [password, setPassword] = useState('');
@@ -56,6 +70,8 @@ export function Login() {
     setError(null);
 
     try {
+      const chosen = tenants.find((t) => t.id === tenantId);
+      if (chosen) setTenant({ id: chosen.id, name: chosen.name, subdomain: '', instansi_name: chosen.instansi_name, vertical: chosen.vertical });
       const { data } = await api.post<LoginResponse>('/auth/login', {
         username: username.trim(),
         password,
@@ -196,6 +212,21 @@ export function Login() {
 
           {/* translate="no": credential labels must never be rewritten by browser auto-translate */}
           <form onSubmit={handleSubmit} className="space-y-5" noValidate translate="no">
+            {tenants.length > 1 && (
+              <div className="space-y-1.5">
+                <label htmlFor="tenant" className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Instansi / Sekolah
+                </label>
+                <div className="relative">
+                  <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
+                  <select id="tenant" value={tenantId} onChange={(e) => setTenantId(e.target.value)} className={inputClass}>
+                    {tenants.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
             <div className="space-y-1.5">
               <label htmlFor="username" className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Username

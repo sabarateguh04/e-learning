@@ -25,6 +25,9 @@ export interface UserPayload {
   /** Master instansi of the account (tbl_elearning_master_instansi.id). Fences Provinsi/Kota executives to their own institution. */
   instansi_id?: string | null;
   instansi_name?: string | null;
+  /** Unit (tbl_elearning_master_satker.id) — a UNIT_HEAD is fenced to this unit. */
+  satker_id?: string | null;
+  satker_name?: string | null;
   territory_level: TerritoryLevel;
   territory_name: string;
   /** Admin-reset accounts may only call the password-change endpoints until they set a new password. */

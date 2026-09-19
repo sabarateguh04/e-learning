@@ -3,7 +3,7 @@ import { ROLE } from '../middlewares/rbacGuard';
 
 export interface ScopeDescriptor {
   role_level: number;
-  scope: 'TENANT' | 'PROVINCE' | 'CITY' | 'SELF';
+  scope: 'TENANT' | 'PROVINCE' | 'CITY' | 'UNIT' | 'SELF';
   label: string;
 }
 
@@ -43,7 +43,7 @@ const toDate = (v: unknown): string | null => (typeof v === 'string' && DATE_RE.
  * Reads ?provinsi_id=&kota_id=&satker_id=&from=&to= and clamps them to the caller's territory.
  * Returns the effective filters plus which dimensions are locked by role.
  */
-export const resolveFilters = (user: UserPayload, query: Record<string, unknown>): { filters: AnalyticsFilters; locked: { provinsi: boolean; kota: boolean; instansi: boolean } } => {
+export const resolveFilters = (user: UserPayload, query: Record<string, unknown>): { filters: AnalyticsFilters; locked: { provinsi: boolean; kota: boolean; instansi: boolean; satker: boolean } } => {
   let provinsi_id = toInt(query.provinsi_id);
   let kota_id = toInt(query.kota_id);
   const slug = (v: unknown) => (typeof v === 'string' && /^[\w.-]{1,50}$/.test(v) ? v : null);
@@ -54,7 +54,12 @@ export const resolveFilters = (user: UserPayload, query: Record<string, unknown>
   if (from && to && from > to) [from, to] = [to, from];
   if (from && to && (Date.parse(to) - Date.parse(from)) / 86_400_000 > MAX_RANGE_DAYS) from = new Date(Date.parse(to) - MAX_RANGE_DAYS * 86_400_000).toISOString().slice(0, 10);
 
-  const locked = { provinsi: user.role_level >= ROLE.EXEC_PROVINCE, kota: user.role_level >= ROLE.EXEC_CITY, instansi: fencedInstansi(user) !== null };
+  const locked = {
+    provinsi: user.role_level >= ROLE.EXEC_PROVINCE,
+    kota: user.role_level >= ROLE.EXEC_CITY,
+    instansi: fencedInstansi(user) !== null,
+    satker: fencedUnit(user) !== null,
+  };
   return { filters: clamp(user, { provinsi_id, kota_id, instansi_id, satker_id, from, to }), locked };
 };
 
@@ -64,7 +69,10 @@ export const resolveFilters = (user: UserPayload, query: Record<string, unknown>
  * and may narrow with ?instansi_id=. Executives without an instansi mapping are not fenced.
  */
 export const fencedInstansi = (user: UserPayload): string | null =>
-  (user.role_level === ROLE.EXEC_PROVINCE || user.role_level === ROLE.EXEC_CITY) && user.instansi_id ? user.instansi_id : null;
+  (user.role_level === ROLE.EXEC_PROVINCE || user.role_level === ROLE.EXEC_CITY || user.role_level === ROLE.UNIT_HEAD) && user.instansi_id ? user.instansi_id : null;
+
+/** Unit fence: a UNIT_HEAD only ever sees their own satker (school / polsek / branch). */
+export const fencedUnit = (user: UserPayload): string | null => (user.role_level === ROLE.UNIT_HEAD && user.satker_id ? user.satker_id : null);
 
 /**
  * Catalogue fence for the Modules menu: everyone below Nasional (Provinsi, Kota, Trainer) only
@@ -88,6 +96,8 @@ const clamp = (user: UserPayload, f: AnalyticsFilters): AnalyticsFilters => {
       return { ...f, instansi_id, provinsi_id: user.provinsi_id ?? -1 };
     case ROLE.EXEC_CITY:
       return { ...f, instansi_id, provinsi_id: user.provinsi_id ?? -1, kota_id: user.kota_id ?? -1 };
+    case ROLE.UNIT_HEAD:
+      return { ...f, instansi_id, provinsi_id: user.provinsi_id ?? -1, kota_id: user.kota_id ?? -1, satker_id: fencedUnit(user) ?? '-' };
     default:
       return { ...f, instansi_id };
   }
@@ -173,6 +183,8 @@ export const describeScope = (user: UserPayload, filters?: AnalyticsFilters, nam
         return { role_level: user.role_level, scope: 'PROVINCE', label: `Provinsi · ${user.provinsi_name ?? '—'}${inst}` };
       case ROLE.EXEC_CITY:
         return { role_level: user.role_level, scope: 'CITY', label: `Kota · ${user.kota_name ?? '—'}${inst}` };
+      case ROLE.UNIT_HEAD:
+        return { role_level: user.role_level, scope: 'UNIT', label: `Unit · ${user.satker_name ?? '—'}${inst}` };
       default:
         return { role_level: user.role_level, scope: 'SELF', label: 'Laporan saya' };
     }
@@ -183,7 +195,7 @@ export const describeScope = (user: UserPayload, filters?: AnalyticsFilters, nam
   if (names?.instansi) parts.push(names.instansi);
   if (names?.kota) parts.push(names.kota);
   else if (names?.provinsi) parts.push(names.provinsi);
-  if (names?.satker) parts.push(names.satker);
+  if (names?.satker && !fencedUnit(user)) parts.push(names.satker);
   if (filters.from || filters.to) parts.push(`${filters.from ?? '…'} s.d. ${filters.to ?? '…'}`);
   return parts.length ? { ...d, label: `${d.label} › ${parts.join(' · ')}` } : d;
 };

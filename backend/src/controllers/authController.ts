@@ -4,9 +4,10 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
 import { AuthenticatedRequest, JWT_SECRET, UserPayload } from '../middlewares/authenticate';
-import { ROLE, ROLE_LABEL, isRoleLevel } from '../middlewares/rbacGuard';
+import { ROLE, ROLE_LABEL, REGISTERABLE_ROLES, isRoleLevel } from '../middlewares/rbacGuard';
 import { userRepo, UserRow } from '../repositories/userRepo';
-import { tenantRepo } from '../repositories/tenantRepo';
+import { tenantRepo, TenantRow } from '../repositories/tenantRepo';
+import { labelsFor, roleLabelFor } from '../services/vocabulary';
 import { regionRepo } from '../repositories/regionRepo';
 import { accessRepo } from '../repositories/accessRepo';
 import { masterDataRepo } from '../repositories/masterDataRepo';
@@ -64,6 +65,18 @@ const resolveTenant = async (req: Request) => {
 
 const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/; // 3-32 chars, lower-case letters, digits, . _ -
 
+/** Tenant as the frontend sees it: identity + behaviour (vertical vocabulary, approval flow). */
+export const presentTenant = (t: TenantRow) => ({
+  id: t.id,
+  name: t.name,
+  subdomain: t.subdomain,
+  instansi_name: t.instansi_name,
+  theme_color: t.theme_color,
+  vertical: t.vertical,
+  approval_flow: t.approval_flow,
+  labels: labelsFor(t.vertical),
+});
+
 const buildPayload = (u: UserRow): UserPayload => ({
   id: u.id,
   tenant_id: u.tenant_id,
@@ -77,14 +90,16 @@ const buildPayload = (u: UserRow): UserPayload => ({
   kota_name: u.kota_name,
   instansi_id: u.legacy_instansi_id ?? null,
   instansi_name: u.instansi_name ?? null,
+  satker_id: u.legacy_satker_id ?? null,
+  satker_name: u.satker_name ?? null,
   territory_level: u.kota_id ? 'CITY' : u.provinsi_id ? 'PROVINCE' : 'NATIONAL',
   territory_name: u.kota_name ?? u.provinsi_name ?? 'National',
   ...(u.must_change_password ? { must_change_password: true } : {}),
 });
 
-const presentUser = async (payload: UserPayload, row?: UserRow | null) => ({
+const presentUser = async (payload: UserPayload, row?: UserRow | null, tenant?: TenantRow | null) => ({
   ...payload,
-  role_label: isRoleLevel(payload.role_level) ? ROLE_LABEL[payload.role_level] : 'Unknown',
+  role_label: roleLabelFor(tenant?.vertical, payload.role_level, isRoleLevel(payload.role_level) ? ROLE_LABEL[payload.role_level] : 'Unknown'),
   scope: describeScope(payload),
   menus: await accessRepo.allowedMenusFor(payload.role_level),
   profile_photo_url: row?.profile_photo_url ?? null,
@@ -153,9 +168,19 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       success: true,
       message: 'Login successful',
       token,
-      user: await presentUser(payload, user),
-      tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain, instansi_name: tenant.instansi_name },
+      user: await presentUser(payload, user, tenant),
+      tenant: presentTenant(tenant),
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/auth/tenants  (public: workspace picker on the login page)
+export const listTenants = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const tenants = await tenantRepo.list();
+    res.json({ success: true, data: tenants.map((t) => ({ id: t.id, name: t.name, subdomain: t.subdomain, instansi_name: t.instansi_name, vertical: t.vertical })) });
   } catch (err) {
     next(err);
   }
@@ -167,8 +192,8 @@ export const registerOptions = async (_req: Request, res: Response, next: NextFu
     const [provinsi, kota, legacy, tenants] = await Promise.all([regionRepo.provinsi(), regionRepo.kota(), regionRepo.legacyMasters(), tenantRepo.list()]);
     res.json({
       success: true,
-      roles: [ROLE.EXEC_NATIONAL, ROLE.EXEC_PROVINCE, ROLE.EXEC_CITY, ROLE.TRAINER].map((level) => ({ level, label: ROLE_LABEL[level] })),
-      tenants: tenants.map((t) => ({ id: t.id, name: t.name, instansi_name: t.instansi_name })),
+      roles: REGISTERABLE_ROLES.map((level) => ({ level, label: ROLE_LABEL[level] })),
+      tenants: tenants.map((t) => ({ id: t.id, name: t.name, instansi_name: t.instansi_name, vertical: t.vertical })),
       provinsi,
       kota,
       legacy,
@@ -208,7 +233,8 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     if (password.length < 8) errors.password = 'Password must be at least 8 characters';
     if (!isRoleLevel(role_level) || role_level === ROLE.SUPER_ADMIN) errors.role_level = 'Choose a valid role (Super Admin cannot self-register)';
     if (role_level === ROLE.EXEC_PROVINCE && !provinsi_id) errors.provinsi_id = 'Province executives must choose a province';
-    if ((role_level === ROLE.EXEC_CITY || role_level === ROLE.TRAINER) && !kota_id) errors.kota_id = 'Choose your city';
+    if ((role_level === ROLE.EXEC_CITY || role_level === ROLE.UNIT_HEAD || role_level === ROLE.TRAINER) && !kota_id) errors.kota_id = 'Choose your city';
+    if (role_level === ROLE.UNIT_HEAD && !legacy_satker_id) errors.legacy_satker_id = 'Pimpinan Unit harus memilih satuan kerja / unit yang dipimpin';
     if (kota_id && provinsi_id && !(await regionRepo.kotaBelongsToProvinsi(kota_id, provinsi_id))) errors.kota_id = 'City does not belong to the selected province';
     if (!legacy_instansi_id) errors.legacy_instansi_id = 'Instansi is required';
 
@@ -334,7 +360,8 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response, ne
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Invalid email address';
     if (b.role_level !== undefined && Number(b.role_level) !== current.role_level) errors.role_level = 'Role can only be changed by a Super Admin';
     if (current.role_level === ROLE.EXEC_PROVINCE && !provinsi_id) errors.provinsi_id = 'Province executives must have a province';
-    if ((current.role_level === ROLE.EXEC_CITY || current.role_level === ROLE.TRAINER) && !kota_id) errors.kota_id = 'Choose your city';
+    if ((current.role_level === ROLE.EXEC_CITY || current.role_level === ROLE.UNIT_HEAD || current.role_level === ROLE.TRAINER) && !kota_id) errors.kota_id = 'Choose your city';
+    if (current.role_level === ROLE.UNIT_HEAD && !legacy_satker_id) errors.legacy_satker_id = 'Pimpinan Unit harus memiliki satuan kerja / unit';
     if (kota_id && !provinsi_id) errors.provinsi_id = 'Choose the province of the selected city';
     if (kota_id && provinsi_id && !(await regionRepo.kotaBelongsToProvinsi(kota_id, provinsi_id))) errors.kota_id = 'City does not belong to the selected province';
     // Hierarchy check runs only when the request touches the instansi mapping, so unrelated edits
@@ -354,7 +381,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response, ne
     // Territory changes affect scoping claims -> issue a fresh token.
     const payload = buildPayload(row);
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
-    res.json({ success: true, message: 'Profile updated', data: presentProfile(row), token, user: await presentUser(payload, row) });
+    res.json({ success: true, message: 'Profile updated', data: presentProfile(row), token, user: await presentUser(payload, row, await tenantRepo.findById(row.tenant_id)) });
   } catch (err) {
     next(err);
   }
@@ -452,7 +479,7 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response, n
     const fresh = (await userRepo.findById(row.id))!;
     const payload = buildPayload(fresh);
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
-    res.json({ success: true, message: 'Password updated', token, user: await presentUser(payload, fresh) });
+    res.json({ success: true, message: 'Password updated', token, user: await presentUser(payload, fresh, await tenantRepo.findById(fresh.tenant_id)) });
   } catch (err) {
     next(err);
   }
@@ -516,7 +543,7 @@ export const me = async (req: AuthenticatedRequest, res: Response, next: NextFun
     }
     const payload = buildPayload(row);
     const tenant = await tenantRepo.findById(row.tenant_id);
-    res.json({ success: true, user: await presentUser(payload, row), tenant });
+    res.json({ success: true, user: await presentUser(payload, row, tenant), tenant: tenant ? presentTenant(tenant) : null });
   } catch (err) {
     next(err);
   }

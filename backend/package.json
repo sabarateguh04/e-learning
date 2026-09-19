@@ -14,7 +14,8 @@
     "db:seed": "tsx src/database/seedProductionClean.ts",
     "db:seed:regions": "tsx src/database/seedRegionsFull.ts",
     "db:seed:instansi": "tsx src/database/seedInstansiTambahan.ts",
-    "db:seed:master": "tsx src/database/seedMasterInstansi.ts"
+    "db:seed:master": "tsx src/database/seedMasterInstansi.ts",
+    "db:seed:sekolah": "tsx src/database/seedSekolah.ts"
   },
   "keywords": [],
   "author": "",

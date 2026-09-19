@@ -15,6 +15,8 @@ export interface ReportRow extends RowDataPacket {
   trainer_name: string;
   trainer_instansi_id: string | null;
   trainer_instansi_name: string | null;
+  trainer_satker_id: string | null;
+  trainer_satker_name: string | null;
   module_id: string;
   module_title: string;
   provinsi_id: number | null;
@@ -51,6 +53,9 @@ export interface FieldReport {
   /** Master instansi of the submitting trainer — approval and executive scopes are matched on it. */
   trainer_instansi_id: string | null;
   trainer_instansi_name: string | null;
+  /** Unit (satker) of the submitting trainer — a UNIT_HEAD approves only their own unit's reports. */
+  trainer_satker_id: string | null;
+  trainer_satker_name: string | null;
   module_id: string;
   module_title: string;
   provinsi_id: number | null;
@@ -107,10 +112,12 @@ export interface ReportFilters {
 
 const SELECT = `
   SELECT r.*, u.full_name AS trainer_name, u.legacy_instansi_id AS trainer_instansi_id, li.nama AS trainer_instansi_name,
+         u.legacy_satker_id AS trainer_satker_id, ls.nama AS trainer_satker_name,
          m.title AS module_title, p.nama AS provinsi_name, k.nama AS kota_name, rv.full_name AS reviewer_name
     FROM tbl_elearning_field_reports r
     JOIN tbl_elearning_users u ON u.id = r.trainer_id
     LEFT JOIN tbl_elearning_master_instansi li ON li.id = u.legacy_instansi_id
+    LEFT JOIN tbl_elearning_master_satker ls ON ls.id = u.legacy_satker_id
     JOIN tbl_elearning_modules m ON m.id = r.module_id
     LEFT JOIN tbl_elearning_users rv ON rv.id = r.reviewed_by
     LEFT JOIN tbl_elearning_provinsi p ON p.id = r.provinsi_id
@@ -143,6 +150,8 @@ const toReport = (r: ReportRow): FieldReport => ({
   trainer_name: r.trainer_name,
   trainer_instansi_id: r.trainer_instansi_id ?? null,
   trainer_instansi_name: r.trainer_instansi_name ?? null,
+  trainer_satker_id: r.trainer_satker_id ?? null,
+  trainer_satker_name: r.trainer_satker_name ?? null,
   module_id: r.module_id,
   module_title: r.module_title,
   provinsi_id: r.provinsi_id,

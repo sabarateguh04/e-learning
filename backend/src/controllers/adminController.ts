@@ -115,7 +115,8 @@ export const updateUser = wrap(async (req, res) => {
   if (!isRoleLevel(role_level)) errors.role_level = 'Invalid role level';
   if (target.id === req.user!.id && role_level !== ROLE.SUPER_ADMIN) errors.role_level = 'You cannot demote your own account';
   if (role_level === ROLE.EXEC_PROVINCE && !provinsi_id) errors.provinsi_id = 'Province executives need a province';
-  if ((role_level === ROLE.EXEC_CITY || role_level === ROLE.TRAINER) && !kota_id) errors.kota_id = 'City executives and trainers need a city';
+  if ((role_level === ROLE.EXEC_CITY || role_level === ROLE.UNIT_HEAD || role_level === ROLE.TRAINER) && !kota_id) errors.kota_id = 'City executives, unit heads and trainers need a city';
+  if (role_level === ROLE.UNIT_HEAD && !legacy_satker_id) errors.legacy_satker_id = 'Unit heads need a satuan kerja / unit';
   if (kota_id && !provinsi_id) errors.provinsi_id = 'Choose the province of the selected city';
   if (kota_id && provinsi_id && !(await regionRepo.kotaBelongsToProvinsi(kota_id, provinsi_id))) errors.kota_id = 'City does not belong to the selected province';
   if (!legacy_instansi_id) errors.legacy_instansi_id = 'Instansi is required';
