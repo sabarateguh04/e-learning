@@ -1,3 +1,4 @@
+import { BRAND } from '../config';
 import { RowDataPacket } from 'mysql2/promise';
 import { getPool } from '../database/db';
 import { ROLE } from '../middlewares/rbacGuard';
@@ -45,11 +46,11 @@ export async function notifyReportSubmitted(report: FieldReport): Promise<{ reci
       withEmail.map((s) =>
         sendMail({
           to: s.email!,
-          subject: `[E-Learning] ${title}`,
+          subject: `[${BRAND.app}] ${title}`,
           text:
             `Yth. ${s.full_name},\n\n${body}\n\n` +
             `Sebagai ${approverLabel(report)} Anda adalah atasan langsung yang berwenang menyetujui atau menolak laporan ini.\n` +
-            `Buka Inbox Persetujuan Laporan untuk memberikan keputusan.\n\n— Sistem E-Learning & Pemantauan Lapangan`,
+            `Buka Inbox Persetujuan Laporan untuk memberikan keputusan.\n\n— ${BRAND.app} · ${BRAND.tagline}`,
         }).catch((err) => console.error('[notify] mail failed', s.email, err)),
       ),
     );

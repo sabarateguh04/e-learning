@@ -1,4 +1,4 @@
-# Catatan Server — E-Learning (djalu)
+# Catatan Server — SINAU (djalu)
 
 Referensi cepat untuk server yang sedang berjalan. Panduan instalasi dari nol ada di `DEPLOY.md`.
 

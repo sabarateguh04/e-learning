@@ -1,3 +1,4 @@
+import { BRAND } from '../config';
 import { UserPayload } from '../middlewares/authenticate';
 import { ROLE_LABEL, RoleLevel } from '../middlewares/rbacGuard';
 import { ReportPdf, fmtDate, fmtNum, fmtTime } from './pdfKit';
@@ -24,7 +25,7 @@ export function renderExecutiveReport(res: NodeJS.WritableStream, user: UserPayl
   const W = pdf.W;
   const role = ROLE_LABEL[user.role_level as RoleLevel] ?? '—';
 
-  pdf.header(`${tenantName} · E-Learning & Pemantauan Lapangan`, [
+  pdf.header(`${tenantName} · ${BRAND.app} · ${BRAND.tagline}`, [
     ['Cakupan data', data.scope.label],
     ['Disusun oleh', `${user.full_name} (${role})`],
     ['Periode aktivitas', `${data.period.from} s.d. ${data.period.to}`],

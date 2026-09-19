@@ -141,7 +141,7 @@ export function PublicPortal() {
           <Link to="/portal" className="flex min-w-0 items-center gap-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-sky-400 to-blue-600 text-white shadow-md shadow-sky-500/30"><Layers className="h-4 w-4" /></span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-semibold tracking-tight">Portal Learning</span>
+              <span className="block truncate text-sm font-semibold tracking-tight">Portal SINAU</span>
               <span className="hidden text-[11px] text-slate-500 dark:text-slate-400 sm:block">Platform edukasi bersama · lintas instansi</span>
             </span>
           </Link>
@@ -293,7 +293,7 @@ export function PublicPortal() {
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 py-6 sm:px-6 md:flex-row md:items-center">
           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-tr from-sky-400 to-blue-600 text-white"><Layers className="h-3.5 w-3.5" /></span>
-            <span><span className="font-medium text-slate-700 dark:text-slate-200">Portal Learning</span> · {BRAND.public.tagline} · © {new Date().getFullYear()}</span>
+            <span><span className="font-medium text-slate-700 dark:text-slate-200">Portal SINAU</span> · {BRAND.public.tagline} · © {new Date().getFullYear()}</span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Hanya modul yang disetujui instansi masing-masing</span>

@@ -179,7 +179,7 @@ export function Login() {
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25"><BookOpen className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold text-slate-900 dark:text-white">Lihat Portal Learning</span>
+              <span className="block font-semibold text-slate-900 dark:text-white">Lihat Portal SINAU</span>
               <span className="block truncate text-xs text-slate-500 dark:text-slate-400">Modul yang sudah disetujui — buka presentasi tanpa perlu masuk</span>
             </span>
             <ArrowRight className="h-4 w-4 shrink-0 text-sky-600 transition-transform group-hover:translate-x-0.5 dark:text-sky-400" />

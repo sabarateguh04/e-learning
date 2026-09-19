@@ -3,10 +3,10 @@ export const BRAND = {
   /** Organisation that owns the platform */
   org: 'Korps Lalu Lintas Polri',
   /** Product name */
-  app: 'E-Learning Dikmas Lantas',
-  tagline: 'Platform E-Learning & Pemantauan Lapangan Dikmas Lantas',
+  app: 'SINAU',
+  tagline: 'SINAU — Platform Pembelajaran & Pemantauan Lapangan Dikmas Lantas',
   /** Short label used where space is tight (sidebar subtitle, footers) */
-  short: 'E-Learning Dikmas Lantas',
+  short: 'SINAU · Dikmas Lantas',
   /** Welcome copy on the login panel */
   intro:
     'Satu ruang kerja terpadu per instansi dengan para trainer yang mengelola materi dan melaporkan aktivitas dari lapangan, para eksekutif memantau progres strategis di tingkat nasional, provinsi, hingga kota.',
@@ -16,8 +16,8 @@ export const BRAND = {
    * they must never show an institution name. Use these instead of `org` / `short` there.
    */
   public: {
-    name: 'Platform E-Learning',
-    tagline: 'Platform E-Learning & Pemantauan Lapangan',
+    name: 'SINAU',
+    tagline: 'Platform Pembelajaran & Pemantauan Lapangan',
   },
 } as const;
 

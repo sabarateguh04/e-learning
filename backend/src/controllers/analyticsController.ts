@@ -1,3 +1,4 @@
+import { BRAND } from '../config';
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest, UserPayload } from '../middlewares/authenticate';
 import { reportRepo } from '../repositories/reportRepo';
@@ -96,7 +97,7 @@ export const downloadExecutiveReport = async (req: AuthenticatedRequest, res: Re
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="laporan-eksekutif-${scopeSlug}-${stamp}.pdf"`);
     res.setHeader('Cache-Control', 'no-store');
-    renderExecutiveReport(res, user, tenant?.name ?? 'Platform E-Learning', data);
+    renderExecutiveReport(res, user, tenant?.name ?? BRAND.app, data);
   } catch (err) {
     next(err);
   }

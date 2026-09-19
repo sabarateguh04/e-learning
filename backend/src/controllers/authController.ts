@@ -1,3 +1,4 @@
+import { BRAND } from '../config';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -410,7 +411,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
     await userRepo.resetPassword(user.id, await bcrypt.hash(temporary, 10), true);
     const { delivery } = await sendMail({
       to: email,
-      subject: 'Password sementara akun E-Learning Anda',
+      subject: `Password sementara akun ${BRAND.app} Anda`,
       text: `Halo ${user.full_name},\n\nPassword sementara untuk username "${user.username}" adalah: ${temporary}\n\nMasuk dengan password ini, lalu Anda akan diminta membuat password baru.\nJika Anda tidak meminta reset ini, hubungi ${ADMIN_CONTACT_EMAIL}.`,
     });
 

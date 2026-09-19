@@ -1,3 +1,4 @@
+import { BRAND } from '../lib/brand';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -351,7 +352,7 @@ export function ExecutiveReports() {
       {data && (
         <div className="hidden print:block border-b border-slate-300 pb-3">
           <p className="text-lg font-bold">Laporan Eksekutif</p>
-          <p className="text-sm">{tenant?.name ?? 'Platform E-Learning'} · {data.scope.label}</p>
+          <p className="text-sm">{tenant?.name ?? BRAND.public.name} · {data.scope.label}</p>
           <p className="text-xs text-slate-500">Disusun oleh {user?.full_name} ({user?.role_label}) · dicetak {new Date(data.generated_at).toLocaleString('id-ID')}</p>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { BRAND } from '../config';
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest, UserPayload } from '../middlewares/authenticate';
 import { ROLE_LABEL, RoleLevel } from '../middlewares/rbacGuard';
@@ -118,7 +119,7 @@ export const downloadExecutiveReportPdf = async (req: AuthenticatedRequest, res:
     const user = req.user!;
     const { filters } = resolveFilters(user, req.query as Record<string, unknown>);
     const [data, tenant] = await Promise.all([buildExecutiveReport(user, filters, req.query as Record<string, unknown>), tenantRepo.findById(user.tenant_id)]);
-    const org = tenant?.name ?? 'Platform E-Learning';
+    const org = tenant?.name ?? BRAND.app;
     const now = new Date(data.generated_at);
     const role = ROLE_LABEL[user.role_level as RoleLevel] ?? '—';
     const slug = data.scope.label.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
@@ -131,7 +132,7 @@ export const downloadExecutiveReportPdf = async (req: AuthenticatedRequest, res:
     const W = pdf.W;
     const s = data.summary;
 
-    pdf.header(`${org} · E-Learning & Pemantauan Lapangan`, [
+    pdf.header(`${org} · ${BRAND.app} · ${BRAND.tagline}`, [
       ['Cakupan data', data.scope.label],
       ['Disusun oleh', `${user.full_name} (${role})`],
       ['Periode', `${fmtShortDate(data.period.from)} – ${fmtShortDate(data.period.to)} (${data.trend.length} hari)`],

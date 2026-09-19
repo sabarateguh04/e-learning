@@ -1,4 +1,4 @@
-# Deploy — E-Learning & Field Monitoring
+# Deploy — SINAU (E-Learning & Field Monitoring)
 
 Backend: Node 20+ / Express, port **4006** · Frontend: Vite build (static), port **4007** · DB: MySQL 8 (`db_elearning`).
 
