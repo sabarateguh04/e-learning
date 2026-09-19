@@ -75,6 +75,8 @@ const buildPayload = (u: UserRow): UserPayload => ({
   kota_id: u.kota_id,
   provinsi_name: u.provinsi_name,
   kota_name: u.kota_name,
+  instansi_id: u.legacy_instansi_id ?? null,
+  instansi_name: u.instansi_name ?? null,
   territory_level: u.kota_id ? 'CITY' : u.provinsi_id ? 'PROVINCE' : 'NATIONAL',
   territory_name: u.kota_name ?? u.provinsi_name ?? 'National',
   ...(u.must_change_password ? { must_change_password: true } : {}),

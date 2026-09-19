@@ -11,10 +11,13 @@ export interface ReportForApproval {
   kota_name?: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   approver_role_level?: number | null;
+  trainer_instansi_id?: string | null;
+  trainer_instansi_name?: string | null;
 }
 
 /**
- * Hierarchical approval — one level above the submitter, matched on territory:
+ * Hierarchical approval — one level above the submitter, matched on territory AND instansi
+ * (a Provinsi/Kota executive only reviews trainers of their own institution):
  *   trainer with kota      -> Eksekutif Kota (3) of that kota
  *   trainer with provinsi  -> Eksekutif Provinsi (2) of that provinsi
  *   trainer national-only  -> Eksekutif Nasional (1)
@@ -33,7 +36,7 @@ export const approverLabel = (r: ReportForApproval): string => {
 
 export type ReviewDecision = { allowed: true; path: 'DIRECT_SUPERVISOR' | 'SUPER_ADMIN_OVERRIDE' } | { allowed: false; reason: string };
 
-/** Can `user` approve/reject this report? Level must be exactly one above the trainer (or Super Admin), territory must match. */
+/** Can `user` approve/reject this report? Level must be exactly one above the trainer (or Super Admin), territory and instansi must match. */
 export const canReviewReport = (user: UserPayload, r: ReportForApproval): ReviewDecision => {
   if (user.tenant_id !== r.tenant_id) return { allowed: false, reason: 'Laporan berada di luar instansi Anda' };
   if (user.role_level === ROLE.SUPER_ADMIN) return { allowed: true, path: 'SUPER_ADMIN_OVERRIDE' };
@@ -51,6 +54,9 @@ export const canReviewReport = (user: UserPayload, r: ReportForApproval): Review
       break;
     default:
       break;
+  }
+  if (required !== ROLE.EXEC_NATIONAL && user.instansi_id && r.trainer_instansi_id && user.instansi_id !== r.trainer_instansi_id) {
+    return { allowed: false, reason: `Laporan berasal dari trainer ${r.trainer_instansi_name ?? 'instansi lain'}, di luar instansi Anda` };
   }
   return { allowed: true, path: 'DIRECT_SUPERVISOR' };
 };

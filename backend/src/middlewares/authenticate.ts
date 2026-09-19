@@ -22,6 +22,9 @@ export interface UserPayload {
   kota_id: number | null;
   provinsi_name: string | null;
   kota_name: string | null;
+  /** Master instansi of the account (tbl_elearning_master_instansi.id). Fences Provinsi/Kota executives to their own institution. */
+  instansi_id?: string | null;
+  instansi_name?: string | null;
   territory_level: TerritoryLevel;
   territory_name: string;
   /** Admin-reset accounts may only call the password-change endpoints until they set a new password. */

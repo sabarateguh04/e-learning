@@ -205,15 +205,16 @@ export interface ViewedModuleStat {
 }
 
 export interface FilterOption { id: number | string; nama: string }
-export interface AnalyticsFiltersSelected { provinsi_id: number | null; kota_id: number | null; satker_id: string | null; from: string | null; to: string | null }
+export interface AnalyticsFiltersSelected { provinsi_id: number | null; kota_id: number | null; instansi_id: string | null; satker_id: string | null; from: string | null; to: string | null }
 export interface FilterOptionsResponse {
   success?: boolean;
-  locked: { provinsi: boolean; kota: boolean };
+  locked: { provinsi: boolean; kota: boolean; instansi: boolean };
   selected: AnalyticsFiltersSelected;
   provinsi: FilterOption[];
   kota: FilterOption[];
+  instansi: FilterOption[];
   satker: FilterOption[];
-  names: { provinsi: string | null; kota: string | null; satker: string | null };
+  names: { provinsi: string | null; kota: string | null; instansi: string | null; satker: string | null };
 }
 
 export interface ExecutiveDashboardResponse {

@@ -15,14 +15,16 @@ interface Supervisor extends RowDataPacket {
 
 /**
  * Direct supervisors of a report = every ACTIVE executive holding the required
- * approver role in the report's territory (kota → provinsi → national).
+ * approver role in the report's territory (kota → provinsi → national) and, for
+ * kota/provinsi, in the trainer's own instansi (executives without a mapping still qualify).
  */
-export async function findDirectSupervisors(report: Pick<FieldReport, 'tenant_id' | 'approver_role_level' | 'kota_id' | 'provinsi_id'>): Promise<Supervisor[]> {
+export async function findDirectSupervisors(report: Pick<FieldReport, 'tenant_id' | 'approver_role_level' | 'kota_id' | 'provinsi_id'> & { trainer_instansi_id?: string | null }): Promise<Supervisor[]> {
   const level = report.approver_role_level ?? ROLE.EXEC_NATIONAL;
   const where = ['u.tenant_id = ?', 'u.role_level = ?', "u.account_status = 'ACTIVE'"];
   const params: unknown[] = [report.tenant_id, level];
   if (level === ROLE.EXEC_CITY) { where.push('u.kota_id = ?'); params.push(report.kota_id ?? -1); }
   if (level === ROLE.EXEC_PROVINCE) { where.push('u.provinsi_id = ?'); params.push(report.provinsi_id ?? -1); }
+  if (level !== ROLE.EXEC_NATIONAL && report.trainer_instansi_id) { where.push('(u.legacy_instansi_id = ? OR u.legacy_instansi_id IS NULL)'); params.push(report.trainer_instansi_id); }
   const [rows] = await getPool().query<Supervisor[]>(`SELECT u.id, u.full_name, u.email FROM tbl_elearning_users u WHERE ${where.join(' AND ')}`, params);
   return rows;
 }

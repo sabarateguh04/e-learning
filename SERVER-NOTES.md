@@ -96,3 +96,10 @@ Tombol melayang kanan-bawah di aplikasi dan portal publik. Saat ini **dummy**: j
 Titik sambung untuk versi realtime ditandai `TODO(realtime)` di kedua file itu. Endpoint: `GET /api/alesha/status`,
 `POST /api/alesha/chat` `{ message, history?, context? }`. Isi `ALESHA_API_URL` di `backend/.env` untuk meneruskan
 ke engine Alesha (kontrak lama `POST {URL}/api/chat/learning`); jika engine tidak menjawab, otomatis kembali ke dummy.
+
+## Cakupan data eksekutif (wilayah + instansi)
+
+- **Nasional / Super Admin**: semua instansi & provinsi; filter *Instansi* tersedia di dashboard & laporan eksekutif.
+- **Eksekutif Provinsi / Kota**: hanya wilayahnya **dan instansinya sendiri** (trainer, laporan, akses materi, persetujuan, notifikasi).
+  Eksekutif tanpa pemetaan instansi tidak dipagari instansi (hanya wilayah).
+- Pagar instansi dibawa di token login → setelah update ini pengguna yang masih login perlu **logout & login ulang** agar berlaku.

@@ -13,6 +13,8 @@ export interface ReportRow extends RowDataPacket {
   tenant_id: string;
   trainer_id: string;
   trainer_name: string;
+  trainer_instansi_id: string | null;
+  trainer_instansi_name: string | null;
   module_id: string;
   module_title: string;
   provinsi_id: number | null;
@@ -46,6 +48,9 @@ export interface FieldReport {
   tenant_id: string;
   trainer_id: string;
   trainer_name: string;
+  /** Master instansi of the submitting trainer — approval and executive scopes are matched on it. */
+  trainer_instansi_id: string | null;
+  trainer_instansi_name: string | null;
   module_id: string;
   module_title: string;
   provinsi_id: number | null;
@@ -101,9 +106,11 @@ export interface ReportFilters {
 }
 
 const SELECT = `
-  SELECT r.*, u.full_name AS trainer_name, m.title AS module_title, p.nama AS provinsi_name, k.nama AS kota_name, rv.full_name AS reviewer_name
+  SELECT r.*, u.full_name AS trainer_name, u.legacy_instansi_id AS trainer_instansi_id, li.nama AS trainer_instansi_name,
+         m.title AS module_title, p.nama AS provinsi_name, k.nama AS kota_name, rv.full_name AS reviewer_name
     FROM tbl_elearning_field_reports r
     JOIN tbl_elearning_users u ON u.id = r.trainer_id
+    LEFT JOIN tbl_elearning_master_instansi li ON li.id = u.legacy_instansi_id
     JOIN tbl_elearning_modules m ON m.id = r.module_id
     LEFT JOIN tbl_elearning_users rv ON rv.id = r.reviewed_by
     LEFT JOIN tbl_elearning_provinsi p ON p.id = r.provinsi_id
@@ -134,6 +141,8 @@ const toReport = (r: ReportRow): FieldReport => ({
   tenant_id: r.tenant_id,
   trainer_id: r.trainer_id,
   trainer_name: r.trainer_name,
+  trainer_instansi_id: r.trainer_instansi_id ?? null,
+  trainer_instansi_name: r.trainer_instansi_name ?? null,
   module_id: r.module_id,
   module_title: r.module_title,
   provinsi_id: r.provinsi_id,

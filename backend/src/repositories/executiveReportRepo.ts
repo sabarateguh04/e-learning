@@ -2,7 +2,7 @@ import { RowDataPacket } from 'mysql2/promise';
 import { getPool } from '../database/db';
 import { UserPayload } from '../middlewares/authenticate';
 import { ROLE } from '../middlewares/rbacGuard';
-import { AnalyticsFilters, EMPTY_FILTERS, reportScopeSql, territorySql, trendWindow } from '../services/scope';
+import { AnalyticsFilters, EMPTY_FILTERS, effectiveFilters, reportScopeSql, territorySql, trendWindow } from '../services/scope';
 
 export type BreakdownLevel = 'provinsi' | 'kota' | 'trainer';
 
@@ -32,6 +32,11 @@ export const executiveReportRepo = {
     const us = territorySql(user, 'u', filters);
     // Views: territory + satker via the viewer + the date range.
     const vs = territorySql(user, 'v', filters, { withDates: true, userIdColumn: 'user_id' });
+    // Catalogue size: every approved module, or only the instansi's own when the scope is fenced/narrowed to one.
+    const instansiId = effectiveFilters(user, filters).instansi_id;
+    const availableSql = instansiId
+      ? `SELECT COUNT(*) FROM tbl_elearning_modules m JOIN tbl_elearning_users a ON a.id = m.author_id WHERE m.approval_status = 'APPROVED' AND a.legacy_instansi_id = ?`
+      : `SELECT COUNT(*) FROM tbl_elearning_modules m WHERE m.approval_status = 'APPROVED'`;
 
     // ── Summary: field-report KPIs inside the scope ─────────────────────────
     const [[summary]] = await pool.query<RowDataPacket[]>(
@@ -68,11 +73,11 @@ export const executiveReportRepo = {
       `SELECT COUNT(*) AS total_trainers,
               COALESCE(SUM(u.account_status = 'ACTIVE'), 0) AS active_accounts,
               COALESCE(SUM(u.account_status = 'PENDING'), 0) AS pending_accounts,
-              (SELECT COUNT(*) FROM tbl_elearning_modules m WHERE m.approval_status = 'APPROVED') AS modules_available,
+              (${availableSql}) AS modules_available,
               (SELECT COUNT(*) FROM tbl_elearning_modules m JOIN tbl_elearning_users a ON a.id = m.author_id WHERE ${us.sql.replaceAll('u.', 'a.')}) AS modules_uploaded
          FROM tbl_elearning_users u
         WHERE ${us.sql} AND u.role_level = ${ROLE.TRAINER}`,
-      [...us.params, ...us.params],
+      [...(instansiId ? [instansiId] : []), ...us.params, ...us.params],
     );
 
     // ── Most accessed modules (viewer count) inside the scope ───────────────

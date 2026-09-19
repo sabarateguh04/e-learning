@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import { Building2, CalendarRange, ChevronRight, Lock, MapPin, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Building2, CalendarRange, ChevronRight, Landmark, Lock, MapPin, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { useFetch } from '../lib/hooks';
 import type { AnalyticsFilterValues } from '../lib/useAnalyticsFilters';
 import type { FilterOptionsResponse } from '../types';
@@ -35,9 +35,10 @@ function Field({ icon: Icon, label, children, className = '' }: { icon: typeof M
 /**
  * Hierarchical territory + period filter for executive analytics.
  * Options come from GET /api/analytics/filters, already bounded by the caller's role.
- * Locked dimensions (Provinsi for Kapolda, Provinsi + Kota for Kapolres) are shown once, as a
- * read-only territory badge — never as a dropdown — so the bar only offers what can actually change.
+ * Locked dimensions (Provinsi for Kapolda, Provinsi + Kota for Kapolres, plus their own Instansi)
+ * are shown once, as read-only badges — never as a dropdown — so the bar only offers what can actually change.
  */
+const GRID_COLS: Record<number, string> = { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4', 5: 'lg:grid-cols-5' };
 export function ExecutiveFilterBar({
   values,
   onChange,
@@ -49,14 +50,24 @@ export function ExecutiveFilterBar({
   onClear: () => void;
   active: number;
 }) {
-  const optionsUrl = useMemo(() => `/analytics/filters${values.provinsi_id ? `?provinsi_id=${values.provinsi_id}` : ''}`, [values.provinsi_id]);
+  const optionsUrl = useMemo(() => {
+    const q = new URLSearchParams();
+    if (values.provinsi_id) q.set('provinsi_id', values.provinsi_id);
+    if (values.kota_id) q.set('kota_id', values.kota_id);
+    if (values.instansi_id) q.set('instansi_id', values.instansi_id);
+    const s = q.toString();
+    return `/analytics/filters${s ? `?${s}` : ''}`;
+  }, [values.provinsi_id, values.kota_id, values.instansi_id]);
   const { data } = useFetch<FilterOptionsResponse>(optionsUrl);
-  const locked = data?.locked ?? { provinsi: false, kota: false };
+  const locked = data?.locked ?? { provinsi: false, kota: false, instansi: false };
   const lockedProvinsi = locked.provinsi ? (data?.names.provinsi ?? data?.provinsi[0]?.nama ?? null) : null;
   const lockedKota = locked.kota ? (data?.names.kota ?? data?.kota[0]?.nama ?? null) : null;
+  const lockedInstansi = locked.instansi ? (data?.names.instansi ?? data?.instansi?.[0]?.nama ?? null) : null;
   const showProvinsi = !locked.provinsi;
   const showKota = !locked.kota;
+  const showInstansi = !locked.instansi;
   const kotaEnabled = locked.provinsi || Boolean(values.provinsi_id);
+  const gridCols = GRID_COLS[1 + Number(showProvinsi) + Number(showKota) + Number(showInstansi) + 1] ?? 'lg:grid-cols-5';
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 print:hidden" aria-label="Filter wilayah dan periode">
@@ -65,6 +76,17 @@ export function ExecutiveFilterBar({
         <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <SlidersHorizontal className="h-4 w-4" /> Filter
         </span>
+
+        {lockedInstansi && (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 py-1 pl-2.5 pr-3 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            title="Instansi Anda — data dibatasi ke instansi ini sesuai peran"
+          >
+            <Lock className="h-3 w-3 text-slate-400" />
+            <span className="text-slate-500 dark:text-slate-400">Instansi</span>
+            <span className="max-w-[260px] truncate rounded-md bg-white px-1.5 py-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">{lockedInstansi}</span>
+          </span>
+        )}
 
         {(lockedProvinsi || lockedKota) && (
           <span
@@ -89,7 +111,16 @@ export function ExecutiveFilterBar({
       </div>
 
       {/* Controls: one symmetric row on desktop, 2 columns on tablet, stacked on mobile */}
-      <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 ${gridCols}`}>
+        {showInstansi && (
+          <Field icon={Landmark} label="Instansi">
+            <select value={values.instansi_id} onChange={(e) => onChange({ instansi_id: e.target.value })} className={control}>
+              <option value="">Semua instansi</option>
+              {data?.instansi?.map((i) => <option key={i.id} value={i.id}>{i.nama}</option>)}
+            </select>
+          </Field>
+        )}
+
         {showProvinsi && (
           <Field icon={MapPin} label="Provinsi">
             <select value={values.provinsi_id} onChange={(e) => onChange({ provinsi_id: e.target.value })} className={control}>
@@ -115,7 +146,7 @@ export function ExecutiveFilterBar({
           </select>
         </Field>
 
-        <div className={`flex min-w-0 flex-col gap-1.5 ${showProvinsi && showKota ? '' : showKota ? 'sm:col-span-2 lg:col-span-2' : 'sm:col-span-1 lg:col-span-3'}`}>
+        <div className="flex min-w-0 flex-col gap-1.5">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <CalendarRange className="h-3.5 w-3.5" /> Periode
           </span>

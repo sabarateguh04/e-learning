@@ -7,12 +7,14 @@ import { AnalyticsFilters, resolveFilters, territorySql } from './scope';
 export interface FilterOption { id: number | string; nama: string }
 
 export interface FilterOptions {
-  locked: { provinsi: boolean; kota: boolean };
+  locked: { provinsi: boolean; kota: boolean; instansi: boolean };
   selected: AnalyticsFilters;
   provinsi: FilterOption[];
   kota: FilterOption[];
+  /** Nasional: every instansi that has trainers inside the chosen territory; Provinsi/Kota: own instansi only (locked) */
+  instansi: FilterOption[];
   satker: FilterOption[];
-  names: { provinsi: string | null; kota: string | null; satker: string | null };
+  names: { provinsi: string | null; kota: string | null; instansi: string | null; satker: string | null };
 }
 
 /**
@@ -20,7 +22,8 @@ export interface FilterOptions {
  *  - Nasional: every provinsi; kota of the chosen provinsi
  *  - Provinsi: own provinsi only (locked); every kota inside it
  *  - Kota: both locked
- *  - Satuan kerja: units that actually have trainers inside the current territory
+ *  - Instansi: Nasional picks any instansi with trainers in the territory; Provinsi/Kota are locked to their own
+ *  - Satuan kerja: units that actually have trainers inside the current territory (and instansi)
  */
 export async function loadFilterOptions(user: UserPayload, query: Record<string, unknown>): Promise<FilterOptions> {
   const pool = getPool();
@@ -39,7 +42,20 @@ export async function loadFilterOptions(user: UserPayload, query: Record<string,
         ? await pool.query<RowDataPacket[]>(`SELECT id, nama FROM tbl_elearning_kota WHERE provinsi_id = ? ORDER BY nama`, [kotaProv])
         : [[] as RowDataPacket[]];
 
-  // Satker list ignores the satker filter itself (so the dropdown keeps every option) but honours territory.
+  // Instansi list ignores the instansi/satker filters themselves (so the dropdown keeps every option) but honours territory.
+  const is = territorySql(user, 'u', { ...filters, instansi_id: null, satker_id: null });
+  const [instansi] = locked.instansi
+    ? await pool.query<RowDataPacket[]>(`SELECT id, nama FROM tbl_elearning_master_instansi WHERE id = ?`, [filters.instansi_id])
+    : await pool.query<RowDataPacket[]>(
+        `SELECT DISTINCT li.id, li.nama
+           FROM tbl_elearning_users u
+           JOIN tbl_elearning_master_instansi li ON li.id = u.legacy_instansi_id
+          WHERE ${is.sql} AND u.role_level = ${ROLE.TRAINER}
+          ORDER BY li.nama`,
+        is.params,
+      );
+
+  // Satker list ignores the satker filter itself (so the dropdown keeps every option) but honours territory + instansi.
   const ts = territorySql(user, 'u', { ...filters, satker_id: null });
   const [satker] = await pool.query<RowDataPacket[]>(
     `SELECT DISTINCT s.id, s.nama
@@ -56,8 +72,9 @@ export async function loadFilterOptions(user: UserPayload, query: Record<string,
     selected: filters,
     provinsi: provinsi.map((r) => ({ id: Number(r.id), nama: r.nama })),
     kota: kota.map((r) => ({ id: Number(r.id), nama: r.nama })),
+    instansi: instansi.map((r) => ({ id: String(r.id), nama: r.nama })),
     satker: satker.map((r) => ({ id: String(r.id), nama: r.nama })),
-    names: { provinsi: name(provinsi, filters.provinsi_id), kota: name(kota, filters.kota_id), satker: name(satker, filters.satker_id) },
+    names: { provinsi: name(provinsi, filters.provinsi_id), kota: name(kota, filters.kota_id), instansi: name(instansi, filters.instansi_id), satker: name(satker, filters.satker_id) },
   };
 }
 
@@ -65,5 +82,6 @@ export async function loadFilterOptions(user: UserPayload, query: Record<string,
 export const chosenNames = (o: FilterOptions) => ({
   provinsi: o.locked.provinsi ? null : o.names.provinsi,
   kota: o.locked.kota ? null : o.names.kota,
+  instansi: o.locked.instansi ? null : o.names.instansi,
   satker: o.names.satker,
 });
